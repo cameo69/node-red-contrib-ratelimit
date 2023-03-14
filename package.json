@@ -1,13 +1,20 @@
 {
   "name": "@cameo69/node-red-ratelimit",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "implements rate limit with sliding window",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/cameo69/node-red-contrib-ratelimit.git"
   },
   "keywords": [
-    "node-red"
+    "node-red",
+    "ratelimit",
+    "ratelimit",
+    "rate limit",
+    "rate",
+    "delay",
+    "burst",
+    "sliding window"
   ],
   "author": "cameo69",
   "bugs": {
