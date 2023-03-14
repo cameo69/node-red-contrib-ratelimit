@@ -7,13 +7,9 @@
     "url": "git+https://github.com/cameo69/node-red-contrib-ratelimit.git"
   },
   "keywords": [
-    "delay",
-    "rate",
-    "limit",
-    "ratelimit"
+    "node-red"
   ],
   "author": "cameo69",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/cameo69/node-red-contrib-ratelimit/issues"
   },
