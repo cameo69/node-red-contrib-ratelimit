@@ -6,14 +6,14 @@ module.exports = function(RED) {
         this.name = config.name;
         this.messages = config.messages;
         this.duration = config.duration;
-        this.addcurrentcount = config.addcurrentcount;
+        //this.addcurrentcount = config.addcurrentcount;
         this.msgcounter = 0;
 
         node.on('input', function(msg) {
             
             const NoOfMsg = node.messages;
             const WindowInMilliSec = node.duration;
-            const AddCurrentCount = node.addcurrentcount;
+            const AddCurrentCount = true;
 
             function addTimeout() {
                 setTimeout(() => {
