@@ -1,5 +1,6 @@
 # node-red-contrib-ratelimit
 A simple node that offers rate limiting based on a sliding window.
+
 This allows to let bursts of messages pass but limit the passage of constant high message rates.
 
 User can specify a max number of messages (n) for a time period (t).
