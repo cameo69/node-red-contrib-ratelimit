@@ -18,5 +18,6 @@
       "nodes": {
          "rate-limit": "ratelimit.js"
       }
-   }
+   },
+   "license": "ISC"
 }
