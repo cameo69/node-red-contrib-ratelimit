@@ -3,25 +3,29 @@ module.exports = function(RED) {
         RED.nodes.createNode(this,config);
         var node = this;
 
-        const NoOfMsg = this.rate.messages;
-        const WindowInMilliSec = this.rate.duration;
+        this.name = config.name;
+        this.messages = config.messages;
+        this.duration = config.duration;
+        this.addcurrentcount = config.addcurrentcount;
+        this.msgcounter = 0;
 
         node.on('input', function(msg) {
             
-            //const NoOfMsg = 2;
-//const WindowInMilliSec = 5000;
-const AddCurrentCount = true;
+            const NoOfMsg = node.messages;
+            const WindowInMilliSec = node.duration;
+            const AddCurrentCount = node.addcurrentcount;
 
-function addTimeout() {
-    setTimeout(() => {
-        let currentCount = context.get('msgcounter') || 0;
-        context.set('msgcounter', currentCount -1 );
-    }, WindowInMilliSec);
-}
+            function addTimeout() {
+                setTimeout(() => {
+                    let currentCount = node.msgcounter || 0;
+                    node.msgcounter = currentCount - 1;
+                }, WindowInMilliSec);
+            }
 
-let currentCount = context.get('msgcounter') || 0;
+let currentCount = node.msgcounter || 0;
+
 if (currentCount < NoOfMsg) {
-    context.set('msgcounter', currentCount + 1);
+    node.msgcounter = currentCount + 1;
     addTimeout();
     if (AddCurrentCount) msg.CurrentCount = currentCount + 1;
     node.send([msg, null]);
@@ -34,10 +38,5 @@ if (currentCount < NoOfMsg) {
 
         });
     }
-    RED.nodes.registerType("rate-limit",RateLimitNode, {
-        rate: {
-            messages: {type: "number"},
-            weatduration: {type: "number"}
-        }
-    });
+    RED.nodes.registerType("rate-limit",RateLimitNode);
 }
