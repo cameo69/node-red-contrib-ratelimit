@@ -2,7 +2,7 @@
 <script type="text/javascript">
     RED.nodes.registerType('rate-limit',{
         category: 'function',
-        color: '#a6bbcf',
+        color: '#E6E0F8',
         defaults: {
             name: {value:""},
             messages: {value:1},
@@ -10,9 +10,12 @@
         },
         inputs:1,
         outputs:2,
-        icon: "font-awesome/fa-cloud",
+        icon: "font-awesome/fa-clock-o",
         label: function() {
-            return this.name||"rate-limit";
+            if (this.name) {
+                return this.name;
+            }
+            return "rate limit " + this.messages + " msg/" + this.duration + "ms";
         }
     });
 </script>
