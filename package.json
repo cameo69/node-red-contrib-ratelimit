@@ -1,6 +1,6 @@
 {
-  "name": "node-red-contrib-ratelimit",
-  "version": "0.0.3",
+  "name": "@cameo69/node-red-ratelimit",
+  "version": "0.0.4",
   "description": "implements rate limit with sliding window",
   "repository": {
     "type": "git",
@@ -19,5 +19,8 @@
          "rate-limit": "ratelimit.js"
       }
    },
-   "license": "ISC"
+   "license": "ISC",
+   "publishConfig": {
+    "access": "public"
+  }
 }
