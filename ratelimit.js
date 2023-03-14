@@ -1,35 +1,44 @@
 module.exports = function(RED) {
+    "use strict";
+
   function RateLimitNode(config) {
     RED.nodes.createNode(this, config);
-    var node = this;
+        this.rateUnits = config.rateUnits;
 
+
+        if (config.rateUnits === "minute") {
+            this.nbRateUnits = config.nbRateUnits * 60 * 1000;
+        } else if (config.rateUnits === "hour") {
+            this.nbRateUnits = config.nbRateUnits * 60 * 60 * 1000;
+        } else if (config.rateUnits === "day") {
+            this.nbRateUnits = config.nbRateUnits * 24 * 60 * 60 * 1000;
+        } else {  // Default to seconds
+            this.nbRateUnits = config.nbRateUnits * 1000;
+        }
+
+        this.rate = config.rate;
+                
     this.name = config.name;
-    this.messages = config.messages;
-    this.duration = config.duration;
     this.addcurrentcount = true; //config.addcurrentcount;
     this.msgcounter = 0;
+    var node = this;
 
     node.on("input", function(msg) {
-      const NoOfMsg = node.messages;
-      const WindowInMilliSec = node.duration;
-      const AddCurrentCount = node.addcurrentcount;
-
       function addTimeout() {
         setTimeout(() => {
-          let currentCount = node.msgcounter || 0;
-          if (currentCount > 0) node.msgcounter = currentCount - 1;
-        }, WindowInMilliSec);
+          if ((node.msgcounter || 0) > 0) node.msgcounter -= 1;
+        }, node.nbRateUnits);
       }
 
       let currentCount = node.msgcounter || 0;
 
-      if (currentCount < NoOfMsg) {
+      if (currentCount < node.rate) {
         node.msgcounter = currentCount + 1;
         addTimeout();
-        if (AddCurrentCount) msg.CurrentCount = currentCount + 1;
+        if (node.addcurrentcount) msg.CurrentCount = currentCount + 1;
         node.send([msg, null]);
       } else {
-        if (AddCurrentCount) msg.CurrentCount = currentCount;
+        if (node.addcurrentcount) msg.CurrentCount = currentCount;
         node.send([null, msg]);
       }
     });

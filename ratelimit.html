@@ -1,12 +1,43 @@
+<!-- Define setting UI for weather-data node -->
+<script type="text/html" data-template-name="rate-limit">
+    <div id="rate-details">
+	       <div class="form-row">
+            <label for="node-input-rate"><i class="fa fa-clock-o"></i> Rate</label>
+            <input type="number" id="node-input-rate" placeholder="1" style="text-align:end; width:60px !important">
+            <label for="node-input-rate"> msg(s) per</label>
+            <input type="number" id="node-input-nbRateUnits" placeholder="1" style="text-align:end; width:60px !important">
+            <select id="node-input-rateUnits" style="width:90px !important">
+              <option value="second">Seconds</option>
+              <option value="minute">Minutes</option>
+              <option value="hour">Hours</option>
+              <option value="day">Days</option>
+            </select>
+        </div>
+
+	</div>
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+</script>
+
 <!-- register rate-limit node -->
 <script type="text/javascript">
     RED.nodes.registerType('rate-limit',{
         category: 'function',
         color: '#E6E0F8',
         defaults: {
-            name: {value:""},
-            messages: {value:1},
-            duration: {value:1000}
+            rate: {
+                value:"1",
+                required:true,
+                label:"Rate",
+             },
+            nbRateUnits: {
+                value:"1",
+                required:true,
+            },
+            rateUnits: {value: "second"},
+			name: {value:""}
         },
         inputs:1,
         outputs:2,
@@ -15,25 +46,12 @@
             if (this.name) {
                 return this.name;
             }
-            return "rate limit " + this.messages + " msg/" + this.duration + "ms";
+			var rateTxt = this.rate+" msg/"+(this.rateUnits ? (this.nbRateUnits > 1 ? this.nbRateUnits : '') + this.rateUnits.charAt(0) : "s");
+                
+            //return "rate limit " + this.rate + " msg/" + this.duration + "ms";
+			return "rate limit " + rateTxt;
         }
     });
-</script>
-
-<!-- Define setting UI for weather-data node -->
-<script type="text/html" data-template-name="rate-limit">
-    <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
-    </div>
-    <div class="form-row">
-        <label for="node-input-messages"><i class="fa fa-tag"></i> Messages</label>
-        <input type="number" id="node-input-messages" placeholder="Messages">
-    </div>
-    <div class="form-row">
-        <label for="node-input-duration"><i class="fa fa-tag"></i> Duration</label>
-        <input type="number" id="node-input-duration" placeholder="Duration">
-    </div>
 </script>
 
 <script type="text/html" data-help-name="rate-limit">
