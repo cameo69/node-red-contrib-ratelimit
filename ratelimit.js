@@ -19,7 +19,7 @@ module.exports = function(RED) {
         this.rate = config.rate;
                 
     this.name = config.name;
-    this.addcurrentcount = true; //config.addcurrentcount;
+    this.addcurrentcount = config.addcurrentcount;
     this.msgcounter = 0;
     var node = this;
 
@@ -27,6 +27,13 @@ module.exports = function(RED) {
       function addTimeout() {
         setTimeout(() => {
           if ((node.msgcounter || 0) > 0) node.msgcounter -= 1;
+          
+          let currentCount = (node.msgcounter || 0);
+          if (currentCount > 0) {
+            node.status({fill:"blue", shape:"ring", text: currentCount})
+          } else {
+            node.status({});
+          }
         }, node.nbRateUnits);
       }
 
@@ -37,6 +44,12 @@ module.exports = function(RED) {
         addTimeout();
         if (node.addcurrentcount) msg.CurrentCount = currentCount + 1;
         node.send([msg, null]);
+        
+        if (node.msgcounter < node.rate) {
+          node.status({fill:"blue", shape:"ring", text: node.msgcounter})
+        } else {
+          node.status({fill:"red", shape:"ring", text: node.msgcounter})
+        }
       } else {
         if (node.addcurrentcount) msg.CurrentCount = currentCount;
         node.send([null, msg]);
