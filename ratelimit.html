@@ -1,5 +1,5 @@
 <!-- Define setting UI for weather-data node -->
-<script type="text/html" data-template-name="rate-limit">
+<script type="text/html" data-template-name="rate-limiter">
     <div id="rate-details">
 	       <div class="form-row">
             <label for="node-input-rate"><i class="fa fa-clock-o"></i> Rate</label>
@@ -24,9 +24,9 @@
     </div>
 </script>
 
-<!-- register rate-limit node -->
+<!-- register rate-limiter node -->
 <script type="text/javascript">
-    RED.nodes.registerType('rate-limit',{
+    RED.nodes.registerType('rate-limiter',{
         category: 'function',
         color: '#E6E0F8',
         defaults: {
@@ -58,6 +58,6 @@
     });
 </script>
 
-<script type="text/html" data-help-name="rate-limit">
+<script type="text/html" data-help-name="rate-limiter">
     <p>A simple node that offers rate limiting based on a sliding window.</p>
 </script>

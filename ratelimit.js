@@ -56,5 +56,5 @@ module.exports = function(RED) {
       }
     });
   }
-  RED.nodes.registerType("rate-limit", RateLimitNode);
+  RED.nodes.registerType("rate-limiter", RateLimitNode);
 };
