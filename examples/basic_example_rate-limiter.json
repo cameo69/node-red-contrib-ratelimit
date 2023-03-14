@@ -1,0 +1,199 @@
+[
+    {
+        "id": "4c8281a396ecb99e",
+        "type": "inject",
+        "z": "e33682730616c2c8",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 500,
+        "y": 80,
+        "wires": [
+            [
+                "ec35aaf6d116fe1f"
+            ]
+        ]
+    },
+    {
+        "id": "e3fa2b1815fccda0",
+        "type": "debug",
+        "z": "e33682730616c2c8",
+        "name": "rate is OK",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1160,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "eca21375e3c627eb",
+        "type": "debug",
+        "z": "e33682730616c2c8",
+        "name": "rate TOOOOO HIGH",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1200,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "5c6ae0c479262954",
+        "type": "switch",
+        "z": "e33682730616c2c8",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "neq",
+                "v": "1",
+                "vt": "str"
+            },
+            {
+                "t": "neq",
+                "v": "2",
+                "vt": "str"
+            },
+            {
+                "t": "neq",
+                "v": "3",
+                "vt": "str"
+            },
+            {
+                "t": "neq",
+                "v": "4",
+                "vt": "str"
+            },
+            {
+                "t": "neq",
+                "v": "5",
+                "vt": "str"
+            },
+            {
+                "t": "neq",
+                "v": "6",
+                "vt": "str"
+            },
+            {
+                "t": "neq",
+                "v": "7",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 7,
+        "x": 650,
+        "y": 200,
+        "wires": [
+            [
+                "cc57773d85309b6b"
+            ],
+            [
+                "cc57773d85309b6b"
+            ],
+            [
+                "cc57773d85309b6b"
+            ],
+            [
+                "cc57773d85309b6b"
+            ],
+            [
+                "cc57773d85309b6b"
+            ],
+            [
+                "cc57773d85309b6b"
+            ],
+            [
+                "cc57773d85309b6b"
+            ]
+        ]
+    },
+    {
+        "id": "06185b6de8b70163",
+        "type": "inject",
+        "z": "e33682730616c2c8",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 500,
+        "y": 200,
+        "wires": [
+            [
+                "5c6ae0c479262954"
+            ]
+        ]
+    },
+    {
+        "id": "ec35aaf6d116fe1f",
+        "type": "rate-limiter",
+        "z": "e33682730616c2c8",
+        "rate": "4",
+        "nbRateUnits": "3",
+        "rateUnits": "second",
+        "addcurrentcount": true,
+        "name": "",
+        "x": 950,
+        "y": 200,
+        "wires": [
+            [
+                "e3fa2b1815fccda0"
+            ],
+            [
+                "eca21375e3c627eb"
+            ]
+        ]
+    },
+    {
+        "id": "cc57773d85309b6b",
+        "type": "junction",
+        "z": "e33682730616c2c8",
+        "x": 800,
+        "y": 200,
+        "wires": [
+            [
+                "ec35aaf6d116fe1f"
+            ]
+        ]
+    }
+]
