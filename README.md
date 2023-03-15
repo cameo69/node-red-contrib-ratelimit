@@ -1,4 +1,4 @@
-# node-red-contrib-ratelimit
+# @cameo69/node-red-ratelimit
 A simple node that offers rate limiting based on a sliding window.
 
 This allows to let bursts of messages pass but limit the passage of constant high message rates.
@@ -20,3 +20,11 @@ For every incoming message it is checked if the number of messages sent in the t
 ## Example
 
 ![output_rate-limiter01](https://user-images.githubusercontent.com/44269764/225151405-70633686-777a-4feb-a8ae-2521ec78e505.gif)
+
+## Links
+
+[Nodered.org](https://flows.nodered.org/node/@cameo69/node-red-ratelimit) https://flows.nodered.org/node/@cameo69/node-red-ratelimit
+
+[npm](https://www.npmjs.com/package/@cameo69/node-red-ratelimit) https://www.npmjs.com/package/@cameo69/node-red-ratelimit
+
+[GitHub](https://github.com/cameo69/node-red-contrib-ratelimit) https://github.com/cameo69/node-red-contrib-ratelimit
