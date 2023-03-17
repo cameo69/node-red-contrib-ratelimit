@@ -3,21 +3,22 @@ module.exports = function(RED) {
 
   function RateLimitNode(config) {
     RED.nodes.createNode(this, config);
-        this.rateUnits = config.rateUnits;
+    this.rateUnits = config.rateUnits;
 
+    if (config.rateUnits === "millisecond") {
+      this.nbRateUnits = config.nbRateUnits;
+    } else if (config.rateUnits === "minute") {
+        this.nbRateUnits = config.nbRateUnits * 60 * 1000;
+    } else if (config.rateUnits === "hour") {
+        this.nbRateUnits = config.nbRateUnits * 60 * 60 * 1000;
+    } else if (config.rateUnits === "day") {
+        this.nbRateUnits = config.nbRateUnits * 24 * 60 * 60 * 1000;
+    } else {  // Default to seconds
+        this.nbRateUnits = config.nbRateUnits * 1000;
+    }
 
-        if (config.rateUnits === "minute") {
-            this.nbRateUnits = config.nbRateUnits * 60 * 1000;
-        } else if (config.rateUnits === "hour") {
-            this.nbRateUnits = config.nbRateUnits * 60 * 60 * 1000;
-        } else if (config.rateUnits === "day") {
-            this.nbRateUnits = config.nbRateUnits * 24 * 60 * 60 * 1000;
-        } else {  // Default to seconds
-            this.nbRateUnits = config.nbRateUnits * 1000;
-        }
-
-        this.rate = config.rate;
-                
+    this.rate = config.rate;
+            
     this.name = config.name;
     this.addcurrentcount = config.addcurrentcount;
     this.msgcounter = 0;

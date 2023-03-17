@@ -6,11 +6,12 @@
             <input type="number" id="node-input-rate" placeholder="1" style="text-align:end; width:60px !important">
             <label for="node-input-rate"> msg(s) per</label>
             <input type="number" id="node-input-nbRateUnits" placeholder="1" style="text-align:end; width:60px !important">
-            <select id="node-input-rateUnits" style="width:90px !important">
-              <option value="second">Seconds</option>
-              <option value="minute">Minutes</option>
-              <option value="hour">Hours</option>
-              <option value="day">Days</option>
+            <select id="node-input-rateUnits" style="width:120px !important">
+                <option value="millisecond">Milliseconds</option> //added v0.00.09
+                <option value="second">Seconds</option>
+                <option value="minute">Minutes</option>
+                <option value="hour">Hours</option>
+                <option value="day">Days</option>
             </select>
         </div>
 	</div>
@@ -41,18 +42,24 @@
             },
             rateUnits: {value: "second"},
             addcurrentcount: {value: false},
-			name: {value:""}
+			name: {value: ""},
+            version: {value: 0.0009}
         },
         inputs:1,
         outputs:2,
         icon: "font-awesome/fa-clock-o",
         label: function() {
+            // using this to set value for all
+            //if ((this.version || 0) == 0) this.version = 0.0009;
+            
+            // determine label
             if (this.name) {
                 return this.name;
             }
-			var rateTxt = this.rate+" msg/"+(this.rateUnits ? (this.nbRateUnits > 1 ? this.nbRateUnits : '') + this.rateUnits.charAt(0) : "s");
+
+            var rateUnitTxt = this.rateUnits ? (this.rateUnits == "millisecond" ? "ms" : this.rateUnits.charAt(0)) : "s";
+			var rateTxt = this.rate+" msg/" + (this.nbRateUnits > 1 ? this.nbRateUnits : '') + rateUnitTxt;
                 
-            //return "rate limit " + this.rate + " msg/" + this.duration + "ms";
 			return "rate limit " + rateTxt;
         }
     });
