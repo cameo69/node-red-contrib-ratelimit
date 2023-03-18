@@ -22,7 +22,7 @@ module.exports = function(RED) {
     this.name = config.name;
     this.addcurrentcount = config.addcurrentcount;
     this.msgcounter = 0;
-    var node = this;
+    let node = this;
 
     node.on("input", function(msg) {
       function addTimeout() {

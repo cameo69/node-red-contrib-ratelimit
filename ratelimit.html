@@ -57,8 +57,8 @@
                 return this.name;
             }
 
-            var rateUnitTxt = this.rateUnits ? (this.rateUnits == "millisecond" ? "ms" : this.rateUnits.charAt(0)) : "s";
-			var rateTxt = this.rate+" msg/" + (this.nbRateUnits > 1 ? this.nbRateUnits : '') + rateUnitTxt;
+            let rateUnitTxt = this.rateUnits ? (this.rateUnits == "millisecond" ? "ms" : this.rateUnits.charAt(0)) : "s";
+			let rateTxt = this.rate+" msg/" + (this.nbRateUnits > 1 ? this.nbRateUnits : '') + rateUnitTxt;
                 
 			return "rate limit " + rateTxt;
         }
