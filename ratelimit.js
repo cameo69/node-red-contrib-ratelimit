@@ -1,5 +1,5 @@
 module.exports = function(RED) {
-    "use strict";
+  "use strict";
 
   function RateLimitNode(config) {
     RED.nodes.createNode(this, config);
@@ -19,6 +19,9 @@ module.exports = function(RED) {
 
     this.rate = config.rate;
             
+    this.delay_action = config.delay_action;
+    this.drop_select = config.drop_select;
+
     this.name = config.name;
     this.addcurrentcount = config.addcurrentcount;
     this.msgcounter = 0;
@@ -38,22 +41,32 @@ module.exports = function(RED) {
         }, node.nbRateUnits);
       }
 
-      let currentCount = node.msgcounter || 0;
+      if (node.delay_action === "new option") {
+        //not defined yet
+        node.error("node.delay_action === 'new option'");
+      } else { //default case before v0.0.10
+        let currentCount = node.msgcounter || 0;
 
-      if (currentCount < node.rate) {
-        node.msgcounter = currentCount + 1;
-        addTimeout();
-        if (node.addcurrentcount) msg.CurrentCount = currentCount + 1;
-        node.send([msg, null]);
-        
-        if (node.msgcounter < node.rate) {
-          node.status({fill:"blue", shape:"ring", text: node.msgcounter})
-        } else {
-          node.status({fill:"red", shape:"ring", text: node.msgcounter})
+        if (currentCount < node.rate) {
+          node.msgcounter = currentCount + 1;
+          addTimeout();
+          if (node.addcurrentcount) msg.CurrentCount = currentCount + 1;
+          node.send([msg, null]);
+          
+          if (node.msgcounter < node.rate) {
+            node.status({fill:"blue", shape:"ring", text: node.msgcounter})
+          } else {
+            node.status({fill:"red", shape:"ring", text: node.msgcounter})
+          }
+        } else if (node.drop_select === "drop") {
+          //do nothing
+        } else if (node.drop_select === "queue") {
+          //queue
+          node.warn("not implemented yet");
+        } else { //default case before v0.0.10 if (node.drop_select === "emit") {
+          if (node.addcurrentcount) msg.CurrentCount = currentCount;
+          node.send([null, msg]);
         }
-      } else {
-        if (node.addcurrentcount) msg.CurrentCount = currentCount;
-        node.send([null, msg]);
       }
     });
   }

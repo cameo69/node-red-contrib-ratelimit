@@ -1,7 +1,15 @@
 <!-- Define setting UI for weather-data node -->
 <script type="text/html" data-template-name="rate-limiter">
+
+    <div class="form-row">
+        <label for="node-input-delay_action"><i class="fa fa-tasks"></i>Action</label>
+        <select id="node-input-delay_action" style="width:270px !important">
+            <option value="ratelimit">Limit messages per time</option>
+        </select>
+    </div>
+
     <div id="rate-details">
-	       <div class="form-row">
+	    <div class="form-row">
             <label for="node-input-rate"><i class="fa fa-clock-o"></i> Rate</label>
             <input type="number" id="node-input-rate" placeholder="1" style="text-align:end; width:60px !important">
             <label for="node-input-rate"> msg(s) per</label>
@@ -15,6 +23,15 @@
             </select>
         </div>
 	</div>
+
+    <div class="form-row">
+        <select id="node-input-drop_select" style="width: 70%">
+            <option value="queue">Queue intermediate messages</option>
+            <option value="drop">Drop intermediate messages</option>
+            <option value="emit">Send intermediate messages on 2nd output</option>
+        </select>
+    </div>
+
     <div class="form-row" style="display: flex; align-items: center">
         <input style="width:30px; margin:0" type="checkbox" id="node-input-addcurrentcount">
         <label style="margin:0;width: auto;" for="node-input-addcurrentcount">Add current counter to message (msg.CurrentCount)</label>
@@ -31,6 +48,7 @@
         category: 'function',
         color: '#E6E0F8',
         defaults: {
+            delay_action: {value: "ratelimit"}, //added v.0.0.10
             rate: {
                 value:"1",
                 required:true,
@@ -41,6 +59,7 @@
                 required:true,
             },
             rateUnits: {value: "second"},
+            drop_select: {value: "emit"},  //added v.0.0.10
             addcurrentcount: {value: false},
 			name: {value: ""},
             version: {value: 0.0009}
