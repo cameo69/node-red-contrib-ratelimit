@@ -1,0 +1,35 @@
+{
+    "rate-limiter": {
+        "action": "Action",
+        "ratelimit": "Limit messages per time",
+        "rate": "Rate",
+        "msgper": "msg(s) per",
+        "queuemsg": "Queue intermediate messages",
+        "dropmsg": "Drop intermediate messages",
+        "sendmsg": "Send intermediate messages on 2nd output",
+        "label": {
+            "units": {
+                "millisecond": {
+                    "plural": "Milliseconds",
+                    "singular": "Millisecond"
+                },
+                "second": {
+                    "plural": "Seconds",
+                    "singular": "Second"
+                },
+                "minute": {
+                    "plural": "Minutes",
+                    "singular": "Minute"
+                },
+                "hour": {
+                    "plural": "Hours",
+                    "singular": "Hour"
+                },
+                "day": {
+                    "plural": "Days",
+                    "singular": "Day"
+                }
+            }
+        }
+    }   
+}

@@ -2,33 +2,33 @@
 <script type="text/html" data-template-name="rate-limiter">
 
     <div class="form-row">
-        <label for="node-input-delay_action"><i class="fa fa-tasks"></i>Action</label>
+        <label for="node-input-delay-action"><i class="fa fa-tasks"></i> <span data-i18n="rate-limiter.action"></span></label>
         <select id="node-input-delay_action" style="width:270px !important">
-            <option value="ratelimit">Limit messages per time</option>
+            <option value="ratelimit" data-i18n="rate-limiter.ratelimit"></option>
         </select>
     </div>
 
     <div id="rate-details">
 	    <div class="form-row">
-            <label for="node-input-rate"><i class="fa fa-clock-o"></i> Rate</label>
-            <input type="number" id="node-input-rate" placeholder="1" style="text-align:end; width:60px !important">
-            <label for="node-input-rate"> msg(s) per</label>
-            <input type="number" id="node-input-nbRateUnits" placeholder="1" style="text-align:end; width:60px !important">
+            <label for="node-input-rate"><i class="fa fa-clock-o"></i><span data-i18n="rate-limiter.rate"></span></label>
+            <input type="text" id="node-input-rate" placeholder="1" style="text-align:end; width:60px !important">
+            <label for="node-input-rateUnits"><span data-i18n="rate-limiter.msgper"></span></label>
+            <input type="text" id="node-input-nbRateUnits" placeholder="1" style="text-align:end; width:60px !important">
             <select id="node-input-rateUnits" style="width:120px !important">
-                <option value="millisecond">Milliseconds</option> //added v0.00.09
-                <option value="second">Seconds</option>
-                <option value="minute">Minutes</option>
-                <option value="hour">Hours</option>
-                <option value="day">Days</option>
+                <option value="millisecond" data-i18n="rate-limiter.label.units.millisecond.singular"></option>
+                <option value="second" data-i18n="rate-limiter.label.units.second.singular"></option>
+                <option value="minute" data-i18n="rate-limiter.label.units.minute.singular"></option>
+                <option value="hour" data-i18n="rate-limiter.label.units.hour.singular"></option>
+                <option value="day" data-i18n="rate-limiter.label.units.day.singular"></option>
             </select>
         </div>
 	</div>
 
     <div class="form-row">
         <select id="node-input-drop_select" style="width: 70%">
-            <option value="queue">Queue intermediate messages</option>
-            <option value="drop">Drop intermediate messages</option>
-            <option value="emit">Send intermediate messages on 2nd output</option>
+            <option value="queue" data-i18n="rate-limiter.queuemsg"></option>>
+            <option value="drop" data-i18n="rate-limiter.dropmsg"></option>>
+            <option value="emit" data-i18n="rate-limiter.sendmsg"></option>>
         </select>
     </div>
 
@@ -53,10 +53,25 @@
                 value:"1",
                 required:true,
                 label:"Rate",
+                validate:function(v,opt) {
+                    function isPosInt(str) {
+                        return /^\+?\d+$/.test(str);
+                    }
+                    if (RED.validators.number(v) && isPosInt(v) && (v > 0)) {
+                        return true;
+                    }
+                    return RED._("node-red:rate-limiter.errors.invalid-rate");
+                }
              },
             nbRateUnits: {
                 value:"1",
                 required:true,
+                validate:function(v,opt) {
+                    if (RED.validators.number(v) && (v > 0)) {
+                        return true;
+                    }
+                    return RED._("node-red:rate-limiter.errors.invalid-rate-unit");
+                }
             },
             rateUnits: {value: "second"},
             drop_select: {value: "emit"},  //added v.0.0.10
@@ -80,7 +95,172 @@
 			let rateTxt = this.rate+" msg/" + (this.nbRateUnits > 1 ? this.nbRateUnits : '') + rateUnitTxt;
                 
 			return "rate limit " + rateTxt;
+        },
+        oneditprepare: function() {
+            var node = this;
+
+
+/*
+node-input-delay_action
+node-input-rate
+node-input-nbRateUnits
+node-input-rateUnits
+node-input-drop_select
+node-input-addcurrentcount
+node-input-name
+*/
+            //fill empty from previous version
+            //added with v0.0.10
+            if (!this.delay_action) {
+                //this.delay_action = "ratelimit";
+                $("#node-input-delay_action").val('ratelimit');
+            }
+            if (!this.drop_select) {
+                //this.drop_select = "emit";
+                $("#node-input-drop_select").val('emit');
+            }
+
+            //normal definitions
+            $( "#node-input-rate" ).spinner({min:1});
+            $( "#node-input-nbRateUnits" ).spinner({min:1});
+
+/*
+            $( "#node-input-timeout" ).spinner({min:1});          
+            $( "#node-input-randomFirst" ).spinner({min:0});
+            $( "#node-input-randomLast" ).spinner({min:1});
+
+            $('.ui-spinner-button').on("click", function() {
+                $(this).siblings('input').trigger("change");
+            });
+*/
+
+/*
+            $( "#node-input-nbRateUnits" ).on('change keyup', function() {
+                var $this = $(this);
+                var val = parseInt($this.val());
+                var type = "singular";
+                if (val > 1) {
+                    type = "plural";
+                }
+                if ($this.attr("data-type") == type) {
+                    return;
+                }
+                $this.attr("data-type", type);
+                $("#node-input-rateUnits option").each(function () {
+                    var $option = $(this);
+                    var key = "delay.label.units." + $option.val() + "." + type;
+                    $option.attr('data-i18n', 'node-red:' + key);
+                    $option.html(node._(key));
+                });
+            });
+*/
+
+/*
+            if (this.pauseType == "delay") {
+                $("#node-input-delay-action").val('delay');
+                $("#node-input-delay-type").val('delay');
+            } else if (this.pauseType == "delayv") {
+                $("#node-input-delay-action").val('delay');
+                $("#node-input-delay-type").val('delayv');
+            } else if (this.pauseType == "random") {
+                $("#node-input-delay-action").val('delay');
+                $("#node-input-delay-type").val('random');
+            } else if (this.pauseType == "rate") {
+                $("#node-input-delay-action").val('rate');
+                $("#node-input-rate-type").val('all');
+            } else if (this.pauseType == "queue") {
+                $("#node-input-delay-action").val('rate');
+                $("#node-input-rate-type").val('topic');
+                $("#node-input-rate-topic-type").val('queue');
+            } else if (this.pauseType == "timed") {
+                $("#node-input-delay-action").val('rate');
+                $("#node-input-rate-type").val('topic');
+                $("#node-input-rate-topic-type").val('timed');
+            }
+
+            if (!this.timeoutUnits) {
+                $("#node-input-timeoutUnits option").filter(function() {
+                    return $(this).val() == 'seconds';
+                }).attr('selected', true);
+            }
+
+            if (!this.randomUnits) {
+                $("#node-input-randomUnits option").filter(function() {
+                    return $(this).val() == 'seconds';
+                }).attr('selected', true);
+            }
+
+            $("#node-input-delay-action").on("change",function() {
+                if (this.value === "delay") {
+                    $("#delay-details").show();
+                    $("#rate-details").hide();
+                } else if (this.value === "rate") {
+                    $("#delay-details").hide();
+                    $("#rate-details").show();
+                }
+            }).trigger("change");
+
+            $("#node-input-delay-type").on("change", function() {
+                if (this.value === "delay") {
+                    $("#delay-details-for").show();
+                    $("#random-details").hide();
+                } else if (this.value === "delayv") {
+                    $("#delay-details-for").show();
+                    $("#random-details").hide();
+                } else if (this.value === "random") {
+                    $("#delay-details-for").hide();
+                    $("#random-details").show();
+                }
+            }).trigger("change");
+
+            if (this.outputs === 2) {
+                $("#node-input-drop-select").val("emit");
+            } else if (this.drop) {
+                $("#node-input-drop-select").val("drop");
+            } else {
+                $("#node-input-drop-select").val("queue");
+            }
+*/
+
+/*
+            $("#node-input-rate-type").on("change", function() {
+                if (this.value === "all") {
+                    $("#rate-details-per-topic").hide();
+                    $("#node-input-drop-select-queue").attr('disabled', false);
+                } else if (this.value === "topic") {
+                    if ($("#node-input-drop-select").val() === "queue") {
+                        $("#node-input-drop-select").val("drop");
+                    }
+                    $("#node-input-drop-select-queue").attr('disabled', true);
+                    $("#rate-details-per-topic").show();
+                }
+            }).trigger("change");
+*/
+
+        },
+        oneditsave: function() {
+/*
+            var action = $("#node-input-delay-action").val();
+            if (action === "delay") {
+                this.pauseType = $("#node-input-delay-type").val();
+                $("#node-input-outputs").val(1);
+            } else if (action === "rate") {
+                action = $("#node-input-rate-type").val();
+                if (action === "all") {
+                    this.pauseType = "rate";
+                } else {
+                    this.pauseType = $("#node-input-rate-topic-type").val();
+                }
+                var dropType = $("#node-input-drop-select").val();
+                this.drop = dropType !== "queue";
+                $("#node-input-outputs").val(dropType === "emit"?2:1);
+            }
+*/
         }
+
+
+
+
     });
 </script>
 

@@ -18,7 +18,7 @@ module.exports = function(RED) {
     }
 
     this.rate = config.rate;
-            
+
     this.delay_action = config.delay_action;
     this.drop_select = config.drop_select;
 
@@ -29,9 +29,9 @@ module.exports = function(RED) {
 
     node.on("input", function(msg) {
       function addTimeout() {
-        setTimeout(() => {
+        setTimeout(function() {
           if ((node.msgcounter || 0) > 0) node.msgcounter -= 1;
-          
+
           let currentCount = (node.msgcounter || 0);
           if (currentCount > 0) {
             node.status({fill:"blue", shape:"ring", text: currentCount})
@@ -52,7 +52,7 @@ module.exports = function(RED) {
           addTimeout();
           if (node.addcurrentcount) msg.CurrentCount = currentCount + 1;
           node.send([msg, null]);
-          
+
           if (node.msgcounter < node.rate) {
             node.status({fill:"blue", shape:"ring", text: node.msgcounter})
           } else {
