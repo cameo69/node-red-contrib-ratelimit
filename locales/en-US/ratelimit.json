@@ -30,6 +30,14 @@
                     "singular": "Day"
                 }
             }
+        },
+        "errors": {
+            "too-many": "too many pending messages in delay node",
+            "invalid-timeout": "Invalid delay value",
+            "invalid-rate": "Invalid rate value",
+            "invalid-rate-unit": "Invalid rate unit value",
+            "invalid-random-first": "Invalid first random value",
+            "invalid-random-last": "Invalid last random value"
         }
     }   
 }

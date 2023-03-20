@@ -27,6 +27,8 @@ module.exports = function(RED) {
     this.msgcounter = 0;
     let node = this;
 
+    node.warn("this.nbRateUnits == " + this.nbRateUnits);
+
     node.on("input", function(msg) {
       function addTimeout() {
         setTimeout(function() {

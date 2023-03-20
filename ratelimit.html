@@ -48,7 +48,7 @@
         category: 'function',
         color: '#E6E0F8',
         defaults: {
-            delay_action: {value: "ratelimit"}, //added v.0.0.10
+            delay_action: {value: "ratelimit"},
             rate: {
                 value:"1",
                 required:true,
@@ -60,21 +60,33 @@
                     if (RED.validators.number(v) && isPosInt(v) && (v > 0)) {
                         return true;
                     }
-                    return RED._("node-red:rate-limiter.errors.invalid-rate");
+                    return RED._("rate-limiter.errors.invalid-rate");
                 }
              },
             nbRateUnits: {
                 value:"1",
                 required:true,
                 validate:function(v,opt) {
-                    if (RED.validators.number(v) && (v > 0)) {
-                        return true;
+                    function isPosInt(str) {
+                        return /^\+?\d+$/.test(str);
                     }
-                    return RED._("node-red:rate-limiter.errors.invalid-rate-unit");
+                    function isPositiveInteger(n) {
+                        return 0 === n % (!isNaN(parseFloat(n)) && 0 <= ~~n);
+                    }
+                    if (RED.validators.number(v) && (v > 0)) {
+                        let rateunitvalue = $("#node-input-rateUnits").val() || this.rateUnits;
+                        let validated = rateunitvalue === "millisecond" && isPosInt(v);
+                        validated = validated || ( rateunitvalue === "second" && isPositiveInteger(v*1000) );
+                        validated = validated || ( rateunitvalue === "minute" && isPositiveInteger(v*1000*60) );
+                        validated = validated || ( rateunitvalue === "hour" && isPositiveInteger(v*1000*60*60) );
+                        validated = validated || ( rateunitvalue === "day" && isPositiveInteger(v*1000*60*60*24) );
+                        if (validated) return true;
+                    }
+                    return RED._("rate-limiter.errors.invalid-rate-unit");
                 }
             },
             rateUnits: {value: "second"},
-            drop_select: {value: "emit"},  //added v.0.0.10
+            drop_select: {value: "emit"},
             addcurrentcount: {value: false},
 			name: {value: ""},
             version: {value: 0.0009}
@@ -91,8 +103,8 @@
                 return this.name;
             }
 
-            let rateUnitTxt = this.rateUnits ? (this.rateUnits == "millisecond" ? "ms" : this.rateUnits.charAt(0)) : "s";
-			let rateTxt = this.rate+" msg/" + (this.nbRateUnits > 1 ? this.nbRateUnits : '') + rateUnitTxt;
+            let rateUnitTxt = this.rateUnits ? (this.rateUnits === "millisecond" ? "ms" : this.rateUnits.charAt(0)) : "s";
+			let rateTxt = this.rate+" msg/" + (this.nbRateUnits == 1 ? '' : this.nbRateUnits) + rateUnitTxt;
                 
 			return "rate limit " + rateTxt;
         },
