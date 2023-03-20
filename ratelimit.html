@@ -128,16 +128,15 @@ node-input-name
             $( "#node-input-timeout" ).spinner({min:1});          
             $( "#node-input-randomFirst" ).spinner({min:0});
             $( "#node-input-randomLast" ).spinner({min:1});
+*/
 
             $('.ui-spinner-button').on("click", function() {
                 $(this).siblings('input').trigger("change");
             });
-*/
 
-/*
             $( "#node-input-nbRateUnits" ).on('change keyup', function() {
                 var $this = $(this);
-                var val = parseInt($this.val());
+                var val = parseFloat($this.val());
                 var type = "singular";
                 if (val > 1) {
                     type = "plural";
@@ -148,12 +147,12 @@ node-input-name
                 $this.attr("data-type", type);
                 $("#node-input-rateUnits option").each(function () {
                     var $option = $(this);
-                    var key = "delay.label.units." + $option.val() + "." + type;
-                    $option.attr('data-i18n', 'node-red:' + key);
+                    var key = "rate-limiter.label.units." + $option.val() + "." + type;
+                    $option.attr('data-i18n', key);
                     $option.html(node._(key));
                 });
             });
-*/
+
 
 /*
             if (this.pauseType == "delay") {
