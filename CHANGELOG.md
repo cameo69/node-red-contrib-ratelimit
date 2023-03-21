@@ -1,3 +1,9 @@
+- 0.0.10 ()
+    - time units can be a decimal number now (except for milliseconds)
+    - added calls to done()
+    - added new menu items to edit screen
+    - added more details to time selection dialog
+    - added support for internationalization (en-US is default)
 - 0.0.9 (2023-03-17) added Milliseconds
 - 0.0.8 (2023-03-14) added keywords
 - 0.0.7 (2023-03-14) added example
