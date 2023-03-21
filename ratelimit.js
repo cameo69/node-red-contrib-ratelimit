@@ -33,7 +33,7 @@ module.exports = function (RED) {
 
         let node = this;
 
-        node.warn("this.nbRateUnits == " + this.nbRateUnits);
+        //node.warn("this.nbRateUnits == " + this.nbRateUnits);
 
         node.on("input", function (msg, send, done) {
             function addTimeout() {
