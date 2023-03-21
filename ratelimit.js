@@ -28,7 +28,7 @@ module.exports = function (RED) {
         this.msgcounter = 0;
 
         /*
-          initialize fifo buffer
+            initialize fifo buffer
         */
 
         let node = this;
@@ -39,10 +39,10 @@ module.exports = function (RED) {
             function addTimeout() {
                 setTimeout(function () {
                     /*
-                      if buffer then send first in from buffer
-                      do not change counter
-                      else reduce counter
-                   */
+                        if buffer then send first in from buffer
+                        do not change counter
+                        else reduce counter
+                    */
 
                     if ((node.msgcounter || 0) > 0) {
                         node.msgcounter -= 1;
@@ -87,9 +87,9 @@ module.exports = function (RED) {
                     //done(Error("queueing is not implemented yet"));
 
                     /*
-                      duplicate message
-                      add to buffer
-                      inc buffer count
+                        duplicate message
+                        add to buffer
+                        inc buffer count
                     */
 
                     done();
@@ -104,13 +104,13 @@ module.exports = function (RED) {
 
         //on close is missing
         /*
-        clear timeouts
-        clear buffer
-    */
+            clear timeouts
+            clear buffer
+        */
     }
     RED.nodes.registerType("rate-limiter", RateLimitNode);
 };
 
 /*
-  - persistence after restart node red?
+    - persistence after restart node red?
 */
