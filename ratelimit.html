@@ -10,9 +10,9 @@
 
     <div id="rate-details">
 	    <div class="form-row">
-            <label for="node-input-rate"><i class="fa fa-clock-o"></i><span data-i18n="rate-limiter.rate"></span></label>
+            <label for="node-input-rate"><i class="fa fa-clock-o"></i> <span data-i18n="rate-limiter.rate"></span></label>
             <input type="text" id="node-input-rate" placeholder="1" style="text-align:end; width:60px !important">
-            <label for="node-input-rateUnits"><span data-i18n="rate-limiter.msgper"></span></label>
+            <label for="node-input-rateUnits"> <span data-i18n="rate-limiter.msgper"></span></label>
             <input type="text" id="node-input-nbRateUnits" placeholder="1" style="text-align:end; width:60px !important">
             <select id="node-input-rateUnits" style="width:120px !important">
                 <option value="millisecond" data-i18n="rate-limiter.label.units.millisecond.singular"></option>
@@ -26,18 +26,19 @@
 
     <div class="form-row">
         <select id="node-input-drop_select" style="width: 70%">
-            <option value="drop" data-i18n="rate-limiter.dropmsg"></option>>
-            <option value="emit" data-i18n="rate-limiter.sendmsg"></option>>
+            <option value="queue" data-i18n="rate-limiter.queuemsg"></option>
+            <option value="drop" data-i18n="rate-limiter.dropmsg"></option>
+            <option value="emit" data-i18n="rate-limiter.sendmsg"></option>
         </select>
     </div>
 
     <div class="form-row" style="display: flex; align-items: center">
         <input style="width:30px; margin:0" type="checkbox" id="node-input-addcurrentcount">
-        <label style="margin:0;width: auto;" for="node-input-addcurrentcount">Add current counter to message (msg.CurrentCount)</label>
+        <label style="margin:0;width: auto;" for="node-input-addcurrentcount"> <span data-i18n="rate-limiter.addcurrentcount"></span></label>
     </div>
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-        <input type="text" id="node-input-name" placeholder="Name">
+        <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="rate-limiter.name"></span></label>
+        <input type="text" id="node-input-name" data-i18n="[placeholder]rate-limiter.name">
     </div>
 </script>
 

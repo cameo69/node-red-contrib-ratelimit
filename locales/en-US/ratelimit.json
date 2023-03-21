@@ -1,12 +1,14 @@
 {
     "rate-limiter": {
         "action": "Action",
+        "name": "Name",
         "ratelimit": "Limit messages per time",
         "rate": "Rate",
         "msgper": "msg(s) per",
         "queuemsg": "Queue intermediate messages",
         "dropmsg": "Drop intermediate messages",
         "sendmsg": "Send intermediate messages on 2nd output",
+        "addcurrentcount": "Add current counter to message (msg.CurrentCount)",
         "label": {
             "units": {
                 "millisecond": {
