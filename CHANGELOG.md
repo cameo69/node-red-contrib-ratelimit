@@ -1,11 +1,15 @@
-- 0.0.4 (2023-03-14) 
-    - First official release
+- 0.0.9 (2023-03-17) added Milliseconds
+- 0.0.8 (2023-03-14) added keywords
+- 0.0.7 (2023-03-14) added example
+- 0.0.6 (2023-03-14) added README.md
+- 0.0.5 (2023-03-14)
+    - renamed node from rate-limit to rate-limiter to avoid naming conflict with existing other node
+- 0.0.4 (2023-03-14) First official release
     - added to npm https://www.npmjs.com/package/@cameo69/node-red-ratelimit
     - added to Nodered.org https://flows.nodered.org/node/@cameo69/node-red-ratelimit
 - 0.0.3 (2023-03-14) 
     - Working towards becoming an published node-red contrib node
     - change name to match newish node-red naming convention (node-red-contrib-ratelimit) --> @cameo69/node-red-ratelimit
-    - renamed node from ratelimit to rate-limiter to avaid naming conflict with existing other node
 - 0.0.2 (2023-03-14)
     - Still in experimental mode and making it being recognized as node-red contrib node
     - Add `node-red` keyword.
