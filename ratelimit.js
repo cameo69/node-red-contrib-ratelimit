@@ -29,7 +29,7 @@ module.exports = function(RED) {
 
     node.warn("this.nbRateUnits == " + this.nbRateUnits);
 
-    node.on("input", function(msg) {
+    node.on("input", function(msg, send, done) {
       function addTimeout() {
         setTimeout(function() {
           if ((node.msgcounter || 0) > 0) node.msgcounter -= 1;
@@ -45,7 +45,7 @@ module.exports = function(RED) {
 
       if (node.delay_action === "new option") {
         //not defined yet
-        node.error("node.delay_action === 'new option'");
+        done(Error("node.delay_action === 'new option'"));
       } else { //default case before v0.0.10
         let currentCount = node.msgcounter || 0;
 
@@ -53,21 +53,25 @@ module.exports = function(RED) {
           node.msgcounter = currentCount + 1;
           addTimeout();
           if (node.addcurrentcount) msg.CurrentCount = currentCount + 1;
-          node.send([msg, null]);
+          send([msg, null]);
 
           if (node.msgcounter < node.rate) {
             node.status({fill:"blue", shape:"ring", text: node.msgcounter})
           } else {
             node.status({fill:"red", shape:"ring", text: node.msgcounter})
           }
+          done();
         } else if (node.drop_select === "drop") {
           //do nothing
+          done();
         } else if (node.drop_select === "queue") {
           //queue
-          node.warn("not implemented yet");
+          done(Error("queueing is not implemented yet"));
+          //node.warn("not implemented yet");
         } else { //default case before v0.0.10 if (node.drop_select === "emit") {
           if (node.addcurrentcount) msg.CurrentCount = currentCount;
-          node.send([null, msg]);
+          send([null, msg]);
+          done();
         }
       }
     });
