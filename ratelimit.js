@@ -150,7 +150,7 @@ module.exports = function (RED) {
                     node.buffer.pop().done();
                 }
 
-                updateStatus("by on_close");
+                node.status({});
                 done();
             });
 
