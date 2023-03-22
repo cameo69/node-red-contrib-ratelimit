@@ -6,6 +6,8 @@ module.exports = function (RED) {
     "use strict";
 
     var _maxKeptMsgsCount;
+    const _statusUpdateMinTime = 100;
+    const _statusUpdateHoldTime = 1000;
 
     function maxKeptMsgsCount(node) { //copied from delay node
         if (_maxKeptMsgsCount === undefined) {
@@ -55,24 +57,14 @@ module.exports = function (RED) {
 
         node.outputs = config.outputs;
 
-        //node.warn("node.outputs: " + node.outputs);
-        //node.warn("config.outputs: " + config.outputs);
-        //node.warn("this.outputs: " + this.outputs);
-        //node.warn("node.drop_select: " + node.drop_select);
-
         node.name = config.name;
         node.addcurrentcount = config.addcurrentcount;
         node.msgcounter = 0;
 
         node.buffer = [];
         node.timeoutIDs = [];
- 
-        //node.warn("node.buffer.length: " + node.buffer.length);
-        //node.warn("node.timeoutIDs.length: " + node.timeoutIDs.length);
-
-        //node.warn("quite on top before registering");
-
-        //node.warn("node.nbRateUnits == " + node.nbRateUnits);
+        node.isOpen = true;
+        node.canReportStatus = true;
 
         if (node.delay_action === "ratelimit") {
             node.on("input", function (msg, send, done) {
@@ -93,7 +85,7 @@ module.exports = function (RED) {
                 }
 
                 function sendFromQueue() {
-                    if (node.msgcounter < node.rate && node.buffer.length > 0) {
+                    if (node.isOpen && node.msgcounter < node.rate && node.buffer.length > 0) {
                         const currentCounter = ++node.msgcounter;
                         const msgInfo = node.buffer.shift();
                         addCurrentCountToMsg(msgInfo.msg, currentCounter);
@@ -103,6 +95,11 @@ module.exports = function (RED) {
                         msgInfo.done();
                         sendFromQueue();
                     }
+                }
+
+                if (!node.isOpen) {
+                    done();
+                    return;
                 }
 
                 if (node.msgcounter < node.rate) {
@@ -141,16 +138,20 @@ module.exports = function (RED) {
             });
 
             node.on('close', function(removed, done) {
+                //node.warn("called on_close, start");
+                node.isOpen = false;
+
                 while(node.timeoutIDs.length) {
                     clearTimeout(node.timeoutIDs.pop());
                 }
                 //node.warn("called on_close, middle");
+                //node.warn("called on_close, node.timeoutIDs.length: " + node.timeoutIDs.length);
 
                 while(node.buffer.length) { //https://stackoverflow.com/questions/8860188/javascript-clear-all-timeouts
                     node.buffer.pop().done();
                 }
-
-                updateStatus("by on_close");
+                node.msgcounter = 0;
+                node.status({});
                 done();
             });
 
@@ -161,25 +162,53 @@ module.exports = function (RED) {
 
 
         function updateStatus(str) {
-            let color = "green";
-            const currentCount = node.msgcounter;
-            if (currentCount > 0) {
-                const bufLength = node.buffer.length;
-                let txt = currentCount + " sent in timeframe";
-                if (bufLength) txt += ", " + bufLength + " queued";
-                //if (str) txt += ", " + str;
-                if (bufLength === 0) {
-                    if (currentCount >= node.rate) {
-                        color = "blue";
+            function setStatusTimeOut(exec) {
+                node.canReportStatus = false;
+                clearTimeout(node.finalStatusID);
+                exec(false);
+                setTimeout(() => {
+                    if (node.statusNeedsUpdate) {
+                        setStatusTimeOut(exec);
+                    } else {
+                        node.canReportStatus = true;
                     }
-                } else {
-                    color = "red";
-                }
-                node.status({ fill: color, shape: "ring", text: txt });
-            } else {
-                //node.status({ fill: color, shape: "dot", text: "" });
-                node.status({});
+                }, _statusUpdateMinTime);
+                node.finalStatusID = setTimeout(() => {
+                    exec(true);
+                }, _statusUpdateHoldTime);
             }
+
+            const doStatusUpdate = function (isFinal) {
+                node.statusNeedsUpdate = false;
+                let color = "green";
+                let currentCount = node.msgcounter;
+                const bufLength = node.buffer.length;
+                if (bufLength > 0 || currentCount > 0 || !isFinal) {            
+                    if (bufLength === 0) {
+                        if (currentCount >= node.rate) {
+                            color = "blue";
+                        }
+                    } else {
+                        color = "red";
+                        if (!isFinal && currentCount === node.rate - 1) {
+                            currentCount = node.rate;
+                        }
+                    }
+                    let txt = currentCount + " sent in timeframe";
+                    if (bufLength) txt += ", " + bufLength + " queued";
+                    //if (str) txt += ", " + str;
+                    node.status({ fill: color, shape: "ring", text: txt });
+                } else {
+                    //node.status({ fill: color, shape: "dot", text: "" });
+                    node.status({});
+                }
+            }
+
+            if (!node.canReportStatus) {
+                node.statusNeedsUpdate = true;    
+                return;
+            }
+            setStatusTimeOut(doStatusUpdate);
         }
 
         function addCurrentCountToMsg(msg, currentMsgCounter) {
