@@ -53,6 +53,13 @@ module.exports = function (RED) {
         node.delay_action = config.delay_action;
         node.drop_select = config.drop_select;
 
+        node.outputs = config.outputs;
+
+        //node.warn("node.outputs: " + node.outputs);
+        //node.warn("config.outputs: " + config.outputs);
+        //node.warn("this.outputs: " + this.outputs);
+        //node.warn("node.drop_select: " + node.drop_select);
+
         node.name = config.name;
         node.addcurrentcount = config.addcurrentcount;
         node.msgcounter = 0;
@@ -90,7 +97,7 @@ module.exports = function (RED) {
                         const currentCounter = ++node.msgcounter;
                         const msgInfo = node.buffer.shift();
                         addCurrentCountToMsg(msgInfo.msg, currentCounter);
-                        msgInfo.send([msgInfo.msg, null]);
+                        msgInfo.send(msgInfo.msg);
                         addTimeout();
                         updateStatus();
                         msgInfo.done();
@@ -101,7 +108,11 @@ module.exports = function (RED) {
                 if (node.msgcounter < node.rate) {
                     const currentCounter = ++node.msgcounter;
                     addCurrentCountToMsg(msg, currentCounter);
-                    send([msg, null]);
+                    if (node.outputs == 1) {
+                        send(msg);
+                    } else {
+                        send([msg, null]);
+                    }
                     addTimeout();
                     updateStatus();
                     done();
@@ -149,13 +160,11 @@ module.exports = function (RED) {
         }
 
 
-
-
         function updateStatus(str) {
             let color = "green";
             const currentCount = node.msgcounter;
             if (currentCount > 0) {
-                let bufLength = node.buffer.length;
+                const bufLength = node.buffer.length;
                 let txt = currentCount + " sent in timeframe";
                 if (bufLength) txt += ", " + bufLength + " queued";
                 //if (str) txt += ", " + str;
@@ -178,6 +187,16 @@ module.exports = function (RED) {
                 msg.CurrentCount = currentMsgCounter;
             }
         }
+
+/*
+        function variSend(send, o) {
+            let ar = [];
+            for (let i = 0; i < node.outputs; i++) {
+                ar += o[i] ?? null;
+            }
+            send([o[0]]);
+        }
+*/
 
     }
     RED.nodes.registerType("rate-limiter", RateLimitNode);

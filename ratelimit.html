@@ -28,7 +28,8 @@
         </div>
 
         <div class="form-row">
-            <label></label>
+            <input type="hidden" id="node-input-outputs">
+			<label></label>
             <select id="node-input-drop_select" style="width: 70%">
                 <option value="queue" data-i18n="rate-limiter.queuemsg"></option>
                 <option value="drop" data-i18n="rate-limiter.dropmsg"></option>
@@ -92,13 +93,14 @@
                 }
             },
             rateUnits: {value: "second"},
-            drop_select: {value: "emit"},
+            drop_select: {value: "queue"},
             addcurrentcount: {value: false},
 			name: {value: ""},
+            outputs: {value: 1},
             version: {value: 0.0011}
         },
         inputs:1,
-        outputs:2,
+        outputs:1,
         icon: "font-awesome/fa-clock-o",
         label: function() {
             // using this to set value for all
@@ -109,10 +111,10 @@
                 return this.name;
             }
 
-            let rateUnitTxt = this.rateUnits ? (this.rateUnits === "millisecond" ? "ms" : this.rateUnits.charAt(0)) : "s";
-			let rateTxt = this.rate+" msg/" + (this.nbRateUnits == 1 ? '' : this.nbRateUnits) + rateUnitTxt;
-                
-			return "rate limit " + rateTxt;
+            const rateUnitTxt = this.rateUnits ? (this.rateUnits === "millisecond" ? "ms" : this.rateUnits.charAt(0)) : "s";
+			const rateTxt = this.rate+" msg/" + (this.nbRateUnits == 1 ? '' : this.nbRateUnits) + rateUnitTxt;
+            const drpSelectTxt = " (" + (this.drop_select === "queue" ? "queued" : (this.drop_select === "drop" ? "drop" : "2nd out")) + ")";
+			return "rate limit " + rateTxt + drpSelectTxt;
         },
         oneditprepare: function() {
             var node = this;
@@ -123,6 +125,7 @@ node-input-delay_action
 node-input-rate
 node-input-nbRateUnits
 node-input-rateUnits
+node-input-outputs
 node-input-drop_select
 node-input-addcurrentcount
 node-input-name
@@ -170,6 +173,15 @@ node-input-name
                     $option.html(node._(key));
                 });
             });
+
+            //const outp = (this.drop_select === "emit" ? 2 : 1);
+            //this.warn("outp = " + outp);
+            $("#node-input-outputs").val( (this.drop_select === "emit" ? 2 : 1) );
+            
+            $("#node-input-drop_select").on("change", function() {
+                $("#node-input-outputs").val( (this.value === "emit" ? 2 : 1) );
+            }).trigger("change");
+
 
 
 /*
@@ -273,6 +285,7 @@ node-input-name
                 $("#node-input-outputs").val(dropType === "emit"?2:1);
             }
 */
+            this.outputs = $("#node-input-outputs").val();
         }
 
 
