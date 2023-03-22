@@ -9,7 +9,7 @@ module.exports = function (RED) {
 
     function maxKeptMsgsCount(node) { //copied from delay node
         if (_maxKeptMsgsCount === undefined) {
-            var name = "nodeMessageBufferMaxLength";
+            const name = "nodeMessageBufferMaxLength";
             if (RED.settings.hasOwnProperty(name)) {
                 _maxKeptMsgsCount = RED.settings[name];
             }
@@ -21,7 +21,7 @@ module.exports = function (RED) {
     }
 
     function RateLimitNode(config) {
-        let node = this;
+        const node = this;
         RED.nodes.createNode(node, config);
 
         // backward compatibility to v0.0.9 and earlier
@@ -57,156 +57,108 @@ module.exports = function (RED) {
         node.addcurrentcount = config.addcurrentcount;
         node.msgcounter = 0;
 
-        /*
-            initialize fifo buffer
-        */
         node.buffer = [];
+        node.timeoutIDs = [];
+        
+        //node.warn("node.buffer.length: " + node.buffer.length);
+        //node.warn("node.timeoutIDs.length: " + node.timeoutIDs.length);
+
+        //node.warn("quite on top before registering");
 
         //node.warn("node.nbRateUnits == " + node.nbRateUnits);
 
-        node.on("input", function (msg, send, done) {
-            function addTimeout() {
-                setTimeout(function () {
-                    /*
-                        if buffer then send first in from buffer
-                        and create new timeout
-                        do not change counter
-                        else reduce counter
-                    */
-                    //node.warn("setTimeout 1");
-                    //node.warn("setTimeout 2 " + node.buffer.length);
-                    if (node.buffer.length > 0) {
-                        addTimeout();
+        if (node.delay_action === "ratelimit") {
+            node.on("input", function (msg, send, done) {
+                function addTimeout() {
+                    function addTimeoutID(id) {
+                        node.timeoutIDs.push(id);
+                    }
 
-                        const msgInfo = node.buffer.shift(); //parts copied from delay node
-                        if (node.addcurrentcount) {
-                            msgInfo.msg.CurrentCount = node.msgcounter;
-                        }
-                        //node.warn("setTimeout 3");
-                        //node.warn("setTimeout 4 " + msgInfo.msg.payload);
-                        msgInfo.send(msgInfo.msg); // send the first on the queue
-                        msgInfo.done();
-                    } else {
-                        //node.warn("setTimeout 5");
+                    addTimeoutID(setTimeout(function () {
                         if ((node.msgcounter) > 0) {
-                            node.msgcounter -= 1;
+                            node.msgcounter--;
+                            updateStatus("by timeout");
                         } else {
-                            //node.warn("(node.msgcounter !> 0) within callback of setTimeout. Check!");
+                            node.warn("(node.msgcounter <= 0) within callback of setTimeout. Check!");
                         }
+                        sendFromQueue();
+                    }, node.nbRateUnits));
+                }
+
+                function sendFromQueue() {
+                    if (node.msgcounter < node.rate && node.buffer.length > 0) {
+                        const currentCounter = ++node.msgcounter;
+                        const msgInfo = node.buffer.shift();
+                        addCurrentCountToMsg(msgInfo.msg, currentCounter);
+                        msgInfo.send([msgInfo.msg, null]);
+                        addTimeout();
+                        updateStatus();
+                        msgInfo.done();
+                        sendFromQueue();
                     }
-                    //node.warn("setTimeout 6");
+                }
 
-                    /*let currentCount = node.msgcounter || 0;
-                    if (currentCount > 0) {
-                        node.status({ fill: "blue", shape: "ring", text: currentCount });
-                    } else {
-                        node.status({});
-                    }*/
-                    updateStatus("by timeout");
-                }, node.nbRateUnits);
-            }
-
-            if (node.delay_action === "ratelimit") {
-                //default and only case before v0.0.10
-                let currentCount = node.msgcounter || 0;
-
-                if (currentCount < node.rate) {
-                    node.msgcounter = currentCount + 1;
-                    addTimeout();
-                    if (node.addcurrentcount) {
-                        msg.CurrentCount = currentCount + 1;
-                    }
+                if (node.msgcounter < node.rate) {
+                    const currentCounter = ++node.msgcounter;
+                    addCurrentCountToMsg(msg, currentCounter);
                     send([msg, null]);
-
-                    /*if (node.msgcounter < node.rate) {
-                        node.status({ fill: "blue", shape: "ring", text: node.msgcounter });
-                    } else {
-                        node.status({ fill: "red", shape: "ring", text: node.msgcounter });
-                    }*/
+                    addTimeout();
                     updateStatus();
                     done();
+
                 } else if (node.drop_select === "drop") {
-                    //do nothing
                     done();
+
                 } else if (node.drop_select === "queue") {
-                    //queue
-                    //node.warn("queueing is not implemented yet");
-                    //done(Error("queueing is not implemented yet"));
-
-                    /*
-                        duplicate message
-                        add to buffer
-                        inc buffer count
-                    */
-
-
-                    //node.warn("queue 1 " + node.buffer.length);
-                    var max_msgs = maxKeptMsgsCount(node);
-                    //node.warn("queue 2 " + max_msgs);
+                    const max_msgs = maxKeptMsgsCount(node);
                     if ((max_msgs > 0) && (node.buffer.length >= max_msgs)) { //parts copied from delay node
                         node.buffer = [];
                         node.error(RED._("delay.errors.too-many"), msg);
                     } else {
-                        //node.warn("queue 3 " + node.buffer.length);
-                        //node.warn("queue 4 " + _maxKeptMsgsCount);
-                        let m = RED.util.cloneMessage(msg);
+                        const m = RED.util.cloneMessage(msg);
                         node.buffer.push({ msg: m, send: send, done: done });
-                        //node.warn("queue 5 " + node.buffer.length);
                     }
-                    //node.warn("queue 6 " + node.buffer.length);
-
-/*
-var max_msgs = maxKeptMsgsCount(node);
-                            if ((max_msgs > 0) && (node.buffer.length >= max_msgs)) {
-                                node.buffer = [];
-                                node.error(RED._("delay.errors.too-many"), msg);
-                            } else if (msg.toFront === true) {
-                                node.buffer.unshift({msg: m, send: send, done: done});
-                                node.reportDepth();
-                            } else {
-                                node.buffer.push({msg: m, send: send, done: done});
-                                node.reportDepth();
-                            }
-*/
-
                     updateStatus("by queue");
 
-
-
-
-                    /*
-                        don't do done because msg is not done yet. Will be called upon delayed sending.
-                        //done();
-                    */
                 } else {
                     //default case before v0.0.10 if (node.drop_select === "emit") {
-                    if (node.addcurrentcount) msg.CurrentCount = currentCount;
+                    addCurrentCountToMsg(msg, node.msgcounter);
                     send([null, msg]);
+                    //updateStatus();
                     done();
                 }
-            } else {
-                //not defined, you should not get here
-                done(Error("node.delay_action is not defined"));
-            }
-        });
+            });
 
-        //on close is missing
-        /*
-            clear timeouts
-            clear buffer
-        */
+            node.on('close', function(removed, done) {
+                while(node.timeoutIDs.length) {
+                    clearTimeout(node.timeoutIDs.pop());
+                }
+                //node.warn("called on_close, middle");
+
+                while(node.buffer.length) { //https://stackoverflow.com/questions/8860188/javascript-clear-all-timeouts
+                    node.buffer.pop().done();
+                }
+
+                updateStatus("by on_close");
+                done();
+            });
+
+        } else {
+            //not defined, you should not get here, never!
+            done(Error("node.delay_action is not defined"));
+        }
 
 
 
 
         function updateStatus(str) {
             let color = "green";
-            let currentCount = node.msgcounter || 0;
+            const currentCount = node.msgcounter;
             if (currentCount > 0) {
                 let bufLength = node.buffer.length;
                 let txt = currentCount + " sent in timeframe";
                 if (bufLength) txt += ", " + bufLength + " queued";
-                if (str) txt += ", " + str;
+                //if (str) txt += ", " + str;
                 if (bufLength === 0) {
                     if (currentCount >= node.rate) {
                         color = "blue";
@@ -216,11 +168,16 @@ var max_msgs = maxKeptMsgsCount(node);
                 }
                 node.status({ fill: color, shape: "ring", text: txt });
             } else {
-                node.status({ fill: color, shape: "dot", text: "" });
+                //node.status({ fill: color, shape: "dot", text: "" });
+                node.status({});
             }
         }
 
-
+        function addCurrentCountToMsg(msg, currentMsgCounter) {
+            if (node.addcurrentcount) {
+                msg.CurrentCount = currentMsgCounter;
+            }
+        }
 
     }
     RED.nodes.registerType("rate-limiter", RateLimitNode);
