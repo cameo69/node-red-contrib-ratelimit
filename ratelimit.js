@@ -66,7 +66,7 @@ module.exports = function (RED) {
 
         node.buffer = [];
         node.timeoutIDs = [];
-        
+ 
         //node.warn("node.buffer.length: " + node.buffer.length);
         //node.warn("node.timeoutIDs.length: " + node.timeoutIDs.length);
 
