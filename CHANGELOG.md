@@ -1,3 +1,5 @@
+- 0.0.11 (2023-03-22)
+    - updates to documentation
 - 0.0.10 (2023-03-22)
     - added queueing
     - time units can be a decimal number now (except for milliseconds)
