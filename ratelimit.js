@@ -57,11 +57,6 @@ module.exports = function (RED) {
 
         node.outputs = config.outputs;
 
-        //node.warn("node.outputs: " + node.outputs);
-        //node.warn("config.outputs: " + config.outputs);
-        //node.warn("this.outputs: " + this.outputs);
-        //node.warn("node.drop_select: " + node.drop_select);
-
         node.name = config.name;
         node.addcurrentcount = config.addcurrentcount;
         node.msgcounter = 0;
@@ -70,11 +65,6 @@ module.exports = function (RED) {
         node.timeoutIDs = [];
         node.isOpen = true;
         node.canReportStatus = true;
-
-        //node.warn("node.buffer.length: " + node.buffer.length);
-        //node.warn("node.timeoutIDs.length: " + node.timeoutIDs.length);
-        //node.warn("node.nbRateUnits == " + node.nbRateUnits);
-        //node.warn("quite on top before registering");
 
         if (node.delay_action === "ratelimit") {
             node.on("input", function (msg, send, done) {
@@ -175,20 +165,15 @@ module.exports = function (RED) {
             function setStatusTimeOut(exec) {
                 node.canReportStatus = false;
                 clearTimeout(node.finalStatusID);
-                node.send([{ topic: "status", payload: {"stelle": 1, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
                 exec(false);
                 setTimeout(() => {
-                    node.send([{ topic: "status", payload: {"stelle": 2, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
-                        if (node.statusNeedsUpdate) {
-                        node.send([{ topic: "status", payload: {"stelle": 3, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
+                    if (node.statusNeedsUpdate) {
                         setStatusTimeOut(exec);
                     } else {
-                        node.send([{ topic: "status", payload: {"stelle": 4, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
                         node.canReportStatus = true;
                     }
                 }, _statusUpdateMinTime);
                 node.finalStatusID = setTimeout(() => {
-                    node.send([{ topic: "status", payload: {"stelle": 5, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
                     exec(true);
                 }, _statusUpdateHoldTime);
             }
@@ -198,7 +183,6 @@ module.exports = function (RED) {
                 let color = "green";
                 let currentCount = node.msgcounter;
                 const bufLength = node.buffer.length;
-                node.send([{ topic: "status", payload: {"isFinal": isFinal ?? false, "currentCount": currentCount, "node_rate": node.rate, "bufLength": bufLength, "source": "doStatusUpdate"} }]);
                 if (bufLength > 0 || currentCount > 0 || !isFinal) {            
                     if (bufLength === 0) {
                         if (currentCount >= node.rate) {
@@ -207,7 +191,6 @@ module.exports = function (RED) {
                     } else {
                         color = "red";
                         if (!isFinal && currentCount === node.rate - 1) {
-                            node.send([{ topic: "status", payload: {"isFinal": isFinal ?? false, "currentCount": currentCount, "node_rate": node.rate, "bufLength": bufLength, "isIf": true, "source": "doStatusUpdate"} }]);
                             currentCount = node.rate;
                         }
                     }
@@ -225,7 +208,6 @@ module.exports = function (RED) {
                 node.statusNeedsUpdate = true;    
                 return;
             }
-            node.send([{ topic: "status", payload: {"statusNeedsUpdate": node.statusNeedsUpdate, "source": "updateStatus"} }]);
             setStatusTimeOut(doStatusUpdate);
         }
 
