@@ -6,6 +6,8 @@ module.exports = function (RED) {
     "use strict";
 
     var _maxKeptMsgsCount;
+    const _statusUpdateMinTime = 100;
+    const _statusUpdateHoldTime = 1000;
 
     function maxKeptMsgsCount(node) { //copied from delay node
         if (_maxKeptMsgsCount === undefined) {
@@ -67,6 +69,7 @@ module.exports = function (RED) {
         node.buffer = [];
         node.timeoutIDs = [];
         node.isOpen = true;
+        node.canReportStatus = true;
 
         //node.warn("node.buffer.length: " + node.buffer.length);
         //node.warn("node.timeoutIDs.length: " + node.timeoutIDs.length);
@@ -169,25 +172,61 @@ module.exports = function (RED) {
 
 
         function updateStatus(str) {
-            let color = "green";
-            const currentCount = node.msgcounter;
-            if (currentCount > 0) {
-                const bufLength = node.buffer.length;
-                let txt = currentCount + " sent in timeframe";
-                if (bufLength) txt += ", " + bufLength + " queued";
-                //if (str) txt += ", " + str;
-                if (bufLength === 0) {
-                    if (currentCount >= node.rate) {
-                        color = "blue";
+            function setStatusTimeOut(exec) {
+                node.canReportStatus = false;
+                clearTimeout(node.finalStatusID);
+                node.send([{ topic: "status", payload: {"stelle": 1, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
+                exec(false);
+                setTimeout(() => {
+                    node.send([{ topic: "status", payload: {"stelle": 2, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
+                        if (node.statusNeedsUpdate) {
+                        node.send([{ topic: "status", payload: {"stelle": 3, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
+                        setStatusTimeOut(exec);
+                    } else {
+                        node.send([{ topic: "status", payload: {"stelle": 4, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
+                        node.canReportStatus = true;
                     }
-                } else {
-                    color = "red";
-                }
-                node.status({ fill: color, shape: "ring", text: txt });
-            } else {
-                //node.status({ fill: color, shape: "dot", text: "" });
-                node.status({});
+                }, _statusUpdateMinTime);
+                node.finalStatusID = setTimeout(() => {
+                    node.send([{ topic: "status", payload: {"stelle": 5, "statusNeedsUpdate": node.statusNeedsUpdate, "canReportStatus": node.canReportStatus, "source": "setStatusTimeOut"} }]);
+                    exec(true);
+                }, _statusUpdateHoldTime);
             }
+
+            const doStatusUpdate = function (isFinal) {
+                node.statusNeedsUpdate = false;
+                let color = "green";
+                let currentCount = node.msgcounter;
+                const bufLength = node.buffer.length;
+                node.send([{ topic: "status", payload: {"isFinal": isFinal ?? false, "currentCount": currentCount, "node_rate": node.rate, "bufLength": bufLength, "source": "doStatusUpdate"} }]);
+                if (bufLength > 0 || currentCount > 0 || !isFinal) {            
+                    if (bufLength === 0) {
+                        if (currentCount >= node.rate) {
+                            color = "blue";
+                        }
+                    } else {
+                        color = "red";
+                        if (!isFinal && currentCount === node.rate - 1) {
+                            node.send([{ topic: "status", payload: {"isFinal": isFinal ?? false, "currentCount": currentCount, "node_rate": node.rate, "bufLength": bufLength, "isIf": true, "source": "doStatusUpdate"} }]);
+                            currentCount = node.rate;
+                        }
+                    }
+                    let txt = currentCount + " sent in timeframe";
+                    if (bufLength) txt += ", " + bufLength + " queued";
+                    //if (str) txt += ", " + str;
+                    node.status({ fill: color, shape: "ring", text: txt });
+                } else {
+                    //node.status({ fill: color, shape: "dot", text: "" });
+                    node.status({});
+                }
+            }
+
+            if (!node.canReportStatus) {
+                node.statusNeedsUpdate = true;    
+                return;
+            }
+            node.send([{ topic: "status", payload: {"statusNeedsUpdate": node.statusNeedsUpdate, "source": "updateStatus"} }]);
+            setStatusTimeOut(doStatusUpdate);
         }
 
         function addCurrentCountToMsg(msg, currentMsgCounter) {
