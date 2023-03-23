@@ -68,9 +68,9 @@ module.exports = function (RED) {
         node.timeoutIDs = [];
         node.isOpen = true;
 
-        node.warn("node.buffer.length: " + node.buffer.length);
-        node.warn("node.timeoutIDs.length: " + node.timeoutIDs.length);
-        node.warn("node.nbRateUnits == " + node.nbRateUnits);
+        //node.warn("node.buffer.length: " + node.buffer.length);
+        //node.warn("node.timeoutIDs.length: " + node.timeoutIDs.length);
+        //node.warn("node.nbRateUnits == " + node.nbRateUnits);
         //node.warn("quite on top before registering");
 
         if (node.delay_action === "ratelimit") {
@@ -145,14 +145,14 @@ module.exports = function (RED) {
             });
 
             node.on('close', function(removed, done) {
-                node.warn("called on_close, start");
+                //node.warn("called on_close, start");
                 node.isOpen = false;
 
                 while(node.timeoutIDs.length) {
                     clearTimeout(node.timeoutIDs.pop());
                 }
-                node.warn("called on_close, middle");
-                node.warn("called on_close, node.timeoutIDs.length: " + node.timeoutIDs.length);
+                //node.warn("called on_close, middle");
+                //node.warn("called on_close, node.timeoutIDs.length: " + node.timeoutIDs.length);
 
                 while(node.buffer.length) { //https://stackoverflow.com/questions/8860188/javascript-clear-all-timeouts
                     node.buffer.pop().done();
