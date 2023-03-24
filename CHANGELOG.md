@@ -1,4 +1,3 @@
-- test
 - 0.0.12 (2023-03-23)
     - 2nd output not available for queueing and dropping msg
     - fixed issue with wrong status update when redeployed under load
