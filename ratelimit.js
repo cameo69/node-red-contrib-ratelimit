@@ -233,4 +233,8 @@ module.exports = function (RED) {
 
 /*
     - persistence after restart node red?
+    - 2nd exit for droped when queueing
+    - read version from settings
+    - speed testing
+    
 */
