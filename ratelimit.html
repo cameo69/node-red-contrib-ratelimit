@@ -36,7 +36,31 @@
                 <option value="emit" data-i18n="rate-limiter.sendmsg"></option>
             </select>
         </div>
+
+
+        <!-- max queue size & keep newest -->
+        <div id="queue_max_size">
+            <div class="form-row">
+                <label for="node-input-buffer_size"><span data-i18n="rate-limiter.buffer_config"></span></label>
+                <input type="text" id="node-input-buffer_size" placeholder="1000" style="text-align:end; width:60px !important">
+                <label for="node-input-buffer_size"> <span data-i18n="rate-limiter.buffer_size"></span></label>
+            </div>
+
+            <div class="form-row">
+                <label></label>
+                <select id="node-input-buffer_drop" style="width: 70%">
+                    <option value="buffer_drop_old" data-i18n="rate-limiter.buffer_drop_old"></option>
+                    <option value="buffer_drop_new" data-i18n="rate-limiter.buffer_drop_new"></option>
+            </select>
+            </div>
+        </div>
+
+
 	</div>
+
+
+
+    
 
     <div class="form-row" style="display: flex; align-items: center">
         <label></label>
@@ -101,6 +125,21 @@
             addcurrentcount: {value: false},
 			name: {value: ""},
             outputs: {value: 1},
+            buffer_size: {
+                value: 0,
+                validate:function(v,opt) {
+                    function isPosInt(str) {
+                        return /^\+?\d+$/.test(str);
+                    }
+                    if (typeof v == "undefined") {
+                        return true;
+                    }
+                    if (RED.validators.number(v) && isPosInt(v)) {
+                        return true;
+                    }
+                    return RED._("rate-limiter.errors.invalid-rate");
+                }},
+            buffer_drop: {value: "buffer_drop_new"},
             version: {value: 0.0012}
         },
         inputs:1,
@@ -109,6 +148,9 @@
         label: function() {
             // using this to set value for all
             //if ((this.version || 0) == 0) this.version = 0.0009;
+            //if (typeof this.buffer_size == "undefined") this.buffer_size = 0;
+            //if (!this.buffer_size) this.buffer_size = 100;
+            //if ('buffer_size' in this) delete this.buffer_size;
             
             // determine label
             if (this.name) {
@@ -117,8 +159,20 @@
 
             const rateUnitTxt = this.rateUnits ? (this.rateUnits === "millisecond" ? "ms" : this.rateUnits.charAt(0)) : "s";
 			const rateTxt = this.rate+" msg/" + (this.nbRateUnits == 1 ? '' : this.nbRateUnits) + rateUnitTxt;
-            const drpSelectTxt = " (" + (this.drop_select === "queue" ? "queued" : (this.drop_select === "drop" ? "drop" : "2nd out")) + ")";
-			return "rate limit " + rateTxt + drpSelectTxt;
+            let drpSelectTxt;
+            if (this.drop_select === "queue") {
+                if ((typeof this.buffer_size == "undefined") || (this.buffer_size === "0")) {
+                    drpSelectTxt = " (queued)";
+                } else {
+                    //drpSelectTxt = " (queued " + this.buffer_size + (this.buffer_drop === "buffer_drop_old" ? ", drop oldest)" : ", drop new)");
+                    drpSelectTxt = " (queued " + this.buffer_size + ")";
+                }
+            } else if (this.drop_select === "drop") {
+                drpSelectTxt = " (drop)";
+            } else {
+                drpSelectTxt = " (2nd out)";
+            }
+            return "rate limit " + rateTxt + drpSelectTxt;
         },
         oneditprepare: function() {
             var node = this;
@@ -145,10 +199,20 @@ node-input-name
                 $("#node-input-drop_select").val('emit');
             }
 
+            //added post v0.0.12
+            if (!this.buffer_size) {
+                //this.delay_action = "ratelimit";
+                $("#node-input-buffer_size").val(0);
+            }
+            if (!this.buffer_drop) {
+                $("#node-input-buffer_drop").val('buffer_drop_new');
+            }
+
             //normal definitions
             $( "#node-input-rate" ).spinner({min:1});
             $( "#node-input-nbRateUnits" ).spinner({min:1});
-
+            $("#node-input-buffer_size").spinner({min:0});
+            
             $('.ui-spinner-button').on("click", function() {
                 $(this).siblings('input').trigger("change");
             });
@@ -178,6 +242,23 @@ node-input-name
             
             $("#node-input-drop_select").on("change", function() {
                 $("#node-input-outputs").val( (this.value === "emit" ? 2 : 1) );
+                if (this.value === "queue") {
+                    $("#queue_max_size").show();
+                    //$("#queue_max_size :input").prop('disabled', false);
+                } else {
+                    $("#queue_max_size").hide();
+                    //$("#queue_max_size :input").prop('disabled', true);
+                }
+            }).trigger("change");
+
+            $("#node-input-buffer_size").on("change", function() {
+                if (this.value === "0") {
+                    //$("#node-input-buffer_drop").show();
+                    $("#node-input-buffer_drop").prop('disabled', true);
+                } else {
+                    //$("#node-input-buffer_drop").hide();
+                    $("#node-input-buffer_drop").prop('disabled', false);
+                }
             }).trigger("change");
 
             // configure version number
@@ -185,6 +266,7 @@ node-input-name
             $('#node-versionlabel').append(` ${version}`)
 
         },
+
         oneditsave: function() {
             this.outputs = $("#node-input-outputs").val();
         }

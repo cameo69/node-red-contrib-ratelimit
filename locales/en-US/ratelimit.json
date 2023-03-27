@@ -33,13 +33,19 @@
                 }
             }
         },
+        "buffer_config": "Queue Max Size",
+        "buffer_size": "(< 1, no limit)",
+        "buffer_drop_type": "buffer_drop_type",
+        "buffer_drop_old": "Drop oldest message if queue is full",
+        "buffer_drop_new": "Drop new messages if queue is full",
         "errors": {
             "too-many": "too many pending messages in delay node",
             "invalid-timeout": "Invalid delay value",
             "invalid-rate": "Invalid rate value",
             "invalid-rate-unit": "Invalid rate unit value",
             "invalid-random-first": "Invalid first random value",
-            "invalid-random-last": "Invalid last random value"
+            "invalid-random-last": "Invalid last random value",
+            "invalid-buffer-size": "Invalid Max Queue Size"
         }
     }   
 }

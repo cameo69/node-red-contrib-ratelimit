@@ -35,6 +35,12 @@ module.exports = function (RED) {
             config.drop_select = "emit";
         }
 
+        // backward compatibility to v0.0.12 and earlier
+        if (typeof config.buffer_size == "undefined") //idea repeat.js
+        {
+            config.buffer_size = 0;
+        }
+        
         node.rateUnits = config.rateUnits;
 
         if (config.rateUnits === "millisecond") {
@@ -54,6 +60,9 @@ module.exports = function (RED) {
 
         node.delay_action = config.delay_action;
         node.drop_select = config.drop_select;
+
+        node.buffer_size = config.buffer_size;
+        node.buffer_drop_old = (config.buffer_drop === "buffer_drop_old");
 
         node.outputs = config.outputs;
 
@@ -118,15 +127,19 @@ module.exports = function (RED) {
                     done();
 
                 } else if (node.drop_select === "queue") {
-                    const max_msgs = maxKeptMsgsCount(node);
-                    if ((max_msgs > 0) && (node.buffer.length >= max_msgs)) { //parts copied from delay node
-                        node.buffer = [];
-                        node.error(RED._("delay.errors.too-many"), msg);
+                    if (node.buffer_size > 0 && node.buffer.length >= node.buffer_size) {
+                        if (node.buffer_drop_old) {
+                            node.buffer.shift().done();
+                            const m = RED.util.cloneMessage(msg);
+                            node.buffer.push({ msg: m, send: send, done: done });
+                        } else {
+                            done();
+                        }
                     } else {
                         const m = RED.util.cloneMessage(msg);
                         node.buffer.push({ msg: m, send: send, done: done });
                     }
-                    updateStatus("by queue");
+                    updateStatus();
 
                 } else {
                     //default case before v0.0.10 if (node.drop_select === "emit") {
