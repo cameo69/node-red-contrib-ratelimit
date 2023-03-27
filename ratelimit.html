@@ -49,7 +49,7 @@
     </div>
     <div class="form-row">
         <label></label>
-        <label id="versionlabel">Version v0.0.12</label>
+        <label id="node-versionlabel">Version</label>
     </div>
 </script>
 
@@ -179,6 +179,10 @@ node-input-name
             $("#node-input-drop_select").on("change", function() {
                 $("#node-input-outputs").val( (this.value === "emit" ? 2 : 1) );
             }).trigger("change");
+
+            // configure version number
+            const version = RED.nodes.registry.getModule("@cameo69/node-red-ratelimit").version
+            $('#node-versionlabel').append(` ${version}`)
 
         },
         oneditsave: function() {
