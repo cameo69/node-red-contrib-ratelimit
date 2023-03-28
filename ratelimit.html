@@ -33,7 +33,9 @@
             <select id="node-input-drop_select" style="width: 70%">
                 <option value="queue" data-i18n="rate-limiter.queuemsg"></option>
                 <option value="drop" data-i18n="rate-limiter.dropmsg"></option>
+                <!--
                 <option value="emit" data-i18n="rate-limiter.sendmsg"></option>
+                -->
             </select>
         </div>
 
@@ -51,22 +53,25 @@
                 <select id="node-input-buffer_drop" style="width: 70%">
                     <option value="buffer_drop_old" data-i18n="rate-limiter.buffer_drop_old"></option>
                     <option value="buffer_drop_new" data-i18n="rate-limiter.buffer_drop_new"></option>
-            </select>
+                </select>
             </div>
+
         </div>
 
+        <div class="form-row" style="display: flex; align-items: center">
+            <label></label>
+            <input style="width:30px; margin:0" type="checkbox" id="node-input-emit_msg_2nd">
+            <label style="margin:0;width: auto;" for="node-input-emit_msg_2nd"> <span data-i18n="rate-limiter.emit_msg_2nd"></span></label>
+        </div>
+
+        <div class="form-row" style="display: flex; align-items: center">
+            <label></label>
+            <input style="width:30px; margin:0" type="checkbox" id="node-input-addcurrentcount">
+            <label style="margin:0;width: auto;" for="node-input-addcurrentcount"> <span data-i18n="rate-limiter.addcurrentcount"></span></label>
+        </div>
 
 	</div>
 
-
-
-    
-
-    <div class="form-row" style="display: flex; align-items: center">
-        <label></label>
-        <input style="width:30px; margin:0" type="checkbox" id="node-input-addcurrentcount">
-        <label style="margin:0;width: auto;" for="node-input-addcurrentcount"> <span data-i18n="rate-limiter.addcurrentcount"></span></label>
-    </div>
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="rate-limiter.name"></span></label>
         <input type="text" id="node-input-name" data-i18n="[placeholder]rate-limiter.name">
@@ -126,7 +131,7 @@
 			name: {value: ""},
             outputs: {value: 1},
             buffer_size: {
-                value: 0,
+                value: "0",
                 validate:function(v,opt) {
                     function isPosInt(str) {
                         return /^\+?\d+$/.test(str);
@@ -140,6 +145,9 @@
                     return RED._("rate-limiter.errors.invalid-rate");
                 }},
             buffer_drop: {value: "buffer_drop_new"},
+            emit_msg_2nd: {
+                value: false
+            },
             version: {value: 0.0012}
         },
         inputs:1,
@@ -167,7 +175,7 @@
                     //drpSelectTxt = " (queued " + this.buffer_size + (this.buffer_drop === "buffer_drop_old" ? ", drop oldest)" : ", drop new)");
                     drpSelectTxt = " (queued " + this.buffer_size + ")";
                 }
-            } else if (this.drop_select === "drop") {
+            } else if (this.drop_select === "drop" && !this.emit_msg_2nd) {
                 drpSelectTxt = " (drop)";
             } else {
                 drpSelectTxt = " (2nd out)";
@@ -184,6 +192,7 @@ node-input-nbRateUnits
 node-input-rateUnits
 node-input-outputs
 node-input-drop_select
+node-input-emit_msg_2nd
 node-input-addcurrentcount
 node-input-name
 */
@@ -207,6 +216,10 @@ node-input-name
             if (!this.buffer_drop) {
                 $("#node-input-buffer_drop").val('buffer_drop_new');
             }
+            if (!this.emit_msg_2nd) {
+                this.emit_msg_2nd = this.drop_select === "emit";
+            }
+
 
             //normal definitions
             $( "#node-input-rate" ).spinner({min:1});
@@ -236,38 +249,60 @@ node-input-name
                 });
             });
 
-            //const outp = (this.drop_select === "emit" ? 2 : 1);
-            //this.warn("outp = " + outp);
-            $("#node-input-outputs").val( (this.drop_select === "emit" ? 2 : 1) );
-            
+            //$("#node-input-outputs").val( (this.drop_select === "emit" ? 2 : 1) );
+            //if (this.emit_msg_2nd || this.drop_select === "emit") {
+            /* //already changed by $("#node-input-emit_msg_2nd").on("change" 
+            if (this.emit_msg_2nd) {
+                $("#node-input-outputs").val(2);
+            } else {
+                $("#node-input-outputs").val(1);
+            }
+            */
+
+            $("#node-input-emit_msg_2nd").on("change", function() {
+                //$("#node-input-outputs").val( ( $("#node-input-emit_msg_2nd").val() ? 2 : 1) );
+                const outp = $("#node-input-emit_msg_2nd").is(":checked") ? 2 : 1;
+                $("#node-input-outputs").val(outp);
+                //$("#node-input-outputs").val( (this.prop('checked') ? 2 : 1) );
+            }).trigger("change");
+
             $("#node-input-drop_select").on("change", function() {
-                $("#node-input-outputs").val( (this.value === "emit" ? 2 : 1) );
+                //$("#node-input-outputs").val( (this.value === "emit" ? 2 : 1) );
                 if (this.value === "queue") {
                     $("#queue_max_size").show();
                     //$("#queue_max_size :input").prop('disabled', false);
                 } else {
                     $("#queue_max_size").hide();
                     //$("#queue_max_size :input").prop('disabled', true);
+                    $("#node-input-emit_msg_2nd").prop('disabled', false);
+                }
+                if (this.value === "emit") {
+                    $("#node-input-emit_msg_2nd").prop('checked', true); //.val(true);
+                    $("#node-input-outputs").val(2);
+                    $("#node-input-drop_select").val('drop');
                 }
             }).trigger("change");
 
             $("#node-input-buffer_size").on("change", function() {
-                if (this.value === "0") {
+                if (this.value === "0" && $("#node-input-drop_select").val() === "queue") {
                     //$("#node-input-buffer_drop").show();
                     $("#node-input-buffer_drop").prop('disabled', true);
+                    $("#node-input-emit_msg_2nd").prop('disabled', true);
                 } else {
                     //$("#node-input-buffer_drop").hide();
                     $("#node-input-buffer_drop").prop('disabled', false);
+                    $("#node-input-emit_msg_2nd").prop('disabled', false);
                 }
             }).trigger("change");
 
             // configure version number
-            const version = RED.nodes.registry.getModule("@cameo69/node-red-ratelimit").version
-            $('#node-versionlabel').append(` ${version}`)
+            const version = RED.nodes.registry.getModule("@cameo69/node-red-ratelimit").version;
+            $('#node-versionlabel').append(" " + version);
 
         },
 
         oneditsave: function() {
+            //this.outputs = $("#node-input-emit_msg_2nd").is(":checked") ? 2 : 1;
             this.outputs = $("#node-input-outputs").val();
         }
 

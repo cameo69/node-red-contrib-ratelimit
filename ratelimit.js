@@ -40,7 +40,15 @@ module.exports = function (RED) {
         {
             config.buffer_size = 0;
         }
-        
+        if (typeof config.emit_msg_2nd == "undefined")
+        {
+            config.emit_msg_2nd = false;
+        }
+        if (config.drop_select === "emit") {
+            config.drop_select = "drop";
+            config.emit_msg_2nd = true;
+        }
+
         node.rateUnits = config.rateUnits;
 
         if (config.rateUnits === "millisecond") {
@@ -67,6 +75,7 @@ module.exports = function (RED) {
         node.outputs = config.outputs;
 
         node.name = config.name;
+        node.emit_msg_2nd = config.emit_msg_2nd;
         node.addcurrentcount = config.addcurrentcount;
         node.msgcounter = 0;
 
@@ -75,6 +84,8 @@ module.exports = function (RED) {
         node.isOpen = true;
         node.canReportStatus = true;
 
+        node.canWarn = true;
+
         if (node.delay_action === "ratelimit") {
             node.on("input", function (msg, send, done) {
                 function addTimeout() {
@@ -82,15 +93,24 @@ module.exports = function (RED) {
                         node.timeoutIDs.push(id);
                     }
 
-                    addTimeoutID(setTimeout(function () {
-                        if ((node.msgcounter) > 0) {
-                            node.msgcounter--;
-                            updateStatus("by timeout");
-                        } else {
-                            node.warn("(node.msgcounter <= 0) within callback of setTimeout. Check!");
-                        }
-                        sendFromQueue();
-                    }, node.nbRateUnits));
+                    (function() {
+                        let tID = setTimeout(function () {
+                            if ((node.msgcounter) > 0) {
+                                node.msgcounter--;
+                                updateStatus();
+                            } else {
+                                if (canWarn) {
+                                    canWarn = false;
+                                    setTimeout(() => {canWarn = true;},1000);
+                                    node.warn(`(node.msgcounter = ${node.msgcounter} <= 0) within callback of setTimeout. Check!`);
+                                }
+                            }
+                            sendFromQueue();
+
+                            node.timeoutIDs.splice( node.timeoutIDs.findIndex(id => id === tID), 1);
+                        }, node.nbRateUnits);
+                        addTimeoutID(tID);
+                    })();
                 }
 
                 function sendFromQueue() {
@@ -104,6 +124,11 @@ module.exports = function (RED) {
                         msgInfo.done();
                         sendFromQueue();
                     }
+                }
+
+                function send_emit_msg_2nd(msg, send) {
+                    addCurrentCountToMsg(msg, node.msgcounter);
+                    send([null, msg]);
                 }
 
                 if (!node.isOpen) {
@@ -123,16 +148,25 @@ module.exports = function (RED) {
                     updateStatus();
                     done();
 
-                } else if (node.drop_select === "drop") {
-                    done();
+                //} else if (node.drop_select === "drop") {
+                //    done();
 
                 } else if (node.drop_select === "queue") {
                     if (node.buffer_size > 0 && node.buffer.length >= node.buffer_size) {
                         if (node.buffer_drop_old) {
-                            node.buffer.shift().done();
+                            let oldmsg = node.buffer.shift();
+                            if (node.emit_msg_2nd) {
+                                send_emit_msg_2nd(oldmsg.msg, oldmsg.send);
+                            }
+                            oldmsg.done();
+
                             const m = RED.util.cloneMessage(msg);
                             node.buffer.push({ msg: m, send: send, done: done });
                         } else {
+                            if (node.emit_msg_2nd) {
+                                send_emit_msg_2nd(msg, send);
+                            }
+                            //updateStatus();
                             done();
                         }
                     } else {
@@ -143,23 +177,21 @@ module.exports = function (RED) {
 
                 } else {
                     //default case before v0.0.10 if (node.drop_select === "emit") {
-                    addCurrentCountToMsg(msg, node.msgcounter);
-                    send([null, msg]);
+                    //and as of v0.0.13 "emit" will be "drop" + emit_msg_2nd
+                    if (node.emit_msg_2nd) {
+                        send_emit_msg_2nd(msg, send);
+                    }
                     //updateStatus();
                     done();
                 }
             });
 
             node.on('close', function(removed, done) {
-                //node.warn("called on_close, start");
                 node.isOpen = false;
 
                 while(node.timeoutIDs.length) {
                     clearTimeout(node.timeoutIDs.pop());
                 }
-                //node.warn("called on_close, middle");
-                //node.warn("called on_close, node.timeoutIDs.length: " + node.timeoutIDs.length);
-
                 while(node.buffer.length) { //https://stackoverflow.com/questions/8860188/javascript-clear-all-timeouts
                     node.buffer.pop().done();
                 }
@@ -210,7 +242,7 @@ module.exports = function (RED) {
                     let txt = currentCount + " sent in timeframe";
                     if (bufLength) txt += ", " + bufLength + " queued";
                     //if (str) txt += ", " + str;
-                    node.status({ fill: color, shape: "ring", text: txt });
+                    node.status({ fill: color, shape: "ring", text: txt }); //`${txt} - ${node.timeoutIDs.length}` });
                 } else {
                     //node.status({ fill: color, shape: "dot", text: "" });
                     node.status({});
@@ -246,8 +278,5 @@ module.exports = function (RED) {
 
 /*
     - persistence after restart node red?
-    - 2nd exit for droped when queueing
-    - read version from settings
-    - speed testing
     
 */

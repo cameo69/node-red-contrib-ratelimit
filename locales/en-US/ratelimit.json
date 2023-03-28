@@ -8,6 +8,7 @@
         "queuemsg": "Queue intermediate messages",
         "dropmsg": "Drop intermediate messages",
         "sendmsg": "Send intermediate messages on 2nd output",
+        "emit_msg_2nd": "Send intermediate/dropped messages to 2nd output",
         "addcurrentcount": "Add current counter to message (msg.CurrentCount)",
         "label": {
             "units": {
