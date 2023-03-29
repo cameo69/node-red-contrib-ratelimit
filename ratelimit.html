@@ -199,25 +199,35 @@ node-input-name
 
             //fill empty from previous version
             //added with v0.0.10
-            if (!this.delay_action) {
+            if (typeof this.delay_action == "undefined") {
                 //this.delay_action = "ratelimit";
                 $("#node-input-delay_action").val('ratelimit');
             }
-            if (!this.drop_select) {
+            /*if (!this.drop_select) {
                 //this.drop_select = "emit";
-                $("#node-input-drop_select").val('emit');
-            }
+                $("#node-input-drop_select").val("emit");
+            }*/
 
             //added post v0.0.12
-            if (!this.buffer_size) {
+            if (typeof this.buffer_size == "undefined") {
                 //this.delay_action = "ratelimit";
                 $("#node-input-buffer_size").val(0);
             }
-            if (!this.buffer_drop) {
-                $("#node-input-buffer_drop").val('buffer_drop_new');
+            if (typeof this.buffer_drop == "undefined") {
+                //$("#node-input-buffer_drop").val('buffer_drop_new');
+                $("#node-input-buffer_drop option[value='buffer_drop_new']").prop('selected', true);
             }
-            if (!this.emit_msg_2nd) {
-                this.emit_msg_2nd = this.drop_select === "emit";
+            if (typeof this.emit_msg_2nd == "undefined")
+            {
+                $("#node-input-emit_msg_2nd").prop('checked', (this.outputs === 2) );
+            }
+            if (typeof this.drop_select == "undefined" || this.drop_select === "emit") {
+                $("#node-input-outputs").val(2);
+                $("#node-input-emit_msg_2nd").prop('checked', true);
+                //setTimeout(() => {
+                    $("#node-input-drop_select option[value='drop']").prop('selected', true);
+                //}, 50);
+                $("#queue_max_size").hide();
             }
 
 
@@ -249,16 +259,6 @@ node-input-name
                 });
             });
 
-            //$("#node-input-outputs").val( (this.drop_select === "emit" ? 2 : 1) );
-            //if (this.emit_msg_2nd || this.drop_select === "emit") {
-            /* //already changed by $("#node-input-emit_msg_2nd").on("change" 
-            if (this.emit_msg_2nd) {
-                $("#node-input-outputs").val(2);
-            } else {
-                $("#node-input-outputs").val(1);
-            }
-            */
-
             $("#node-input-emit_msg_2nd").on("change", function() {
                 //$("#node-input-outputs").val( ( $("#node-input-emit_msg_2nd").val() ? 2 : 1) );
                 const outp = $("#node-input-emit_msg_2nd").is(":checked") ? 2 : 1;
@@ -266,32 +266,28 @@ node-input-name
                 //$("#node-input-outputs").val( (this.prop('checked') ? 2 : 1) );
             }).trigger("change");
 
-            $("#node-input-drop_select").on("change", function() {
-                //$("#node-input-outputs").val( (this.value === "emit" ? 2 : 1) );
-                if (this.value === "queue") {
-                    $("#queue_max_size").show();
-                    //$("#queue_max_size :input").prop('disabled', false);
-                } else {
-                    $("#queue_max_size").hide();
-                    //$("#queue_max_size :input").prop('disabled', true);
-                    $("#node-input-emit_msg_2nd").prop('disabled', false);
-                }
-                if (this.value === "emit") {
-                    $("#node-input-emit_msg_2nd").prop('checked', true); //.val(true);
-                    $("#node-input-outputs").val(2);
-                    $("#node-input-drop_select").val('drop');
-                }
-            }).trigger("change");
-
-            $("#node-input-buffer_size").on("change", function() {
+            $("#node-input-buffer_size").on("change keyup", function() {
+                debugger;
                 if (this.value === "0" && $("#node-input-drop_select").val() === "queue") {
                     //$("#node-input-buffer_drop").show();
                     $("#node-input-buffer_drop").prop('disabled', true);
                     $("#node-input-emit_msg_2nd").prop('disabled', true);
+                    $("#node-input-emit_msg_2nd").prop('checked', false).change();
                 } else {
                     //$("#node-input-buffer_drop").hide();
                     $("#node-input-buffer_drop").prop('disabled', false);
                     $("#node-input-emit_msg_2nd").prop('disabled', false);
+                }
+            }).trigger("change");
+
+            $("#node-input-drop_select").on("change", function() {
+                if (this.value === "queue") {
+                    $("#queue_max_size").show();
+                    $("#node-input-buffer_size").change();
+                } else {
+                    $("#queue_max_size").hide();
+                    $("#node-input-emit_msg_2nd").prop('disabled', false);
+                    //$("#node-input-buffer_size").change();
                 }
             }).trigger("change");
 

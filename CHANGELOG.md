@@ -1,7 +1,8 @@
-- 0.0.13 ()
+- 0.0.13 (2023-03-29)
     - added max queue size
     - added queueing modes a) drop oldest message and b) drop new messages
     - added option to emit dropped messages on 2nd output also for queueing modes
+    - removed mode "Send intermediate messages on 2nd output", because it can be set via Drop immtermediate messages + new checkbox to emit on 2nd output
 - 0.0.12 (2023-03-23)
     - 2nd output not available for queueing and dropping msg
     - fixed issue with wrong status update when redeployed under load
