@@ -1,6 +1,6 @@
 {
   "name": "@cameo69/node-red-ratelimit",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "implements rate limit with sliding window",
   "repository": {
     "type": "git",
