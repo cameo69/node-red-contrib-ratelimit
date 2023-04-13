@@ -475,16 +475,6 @@ module.exports = function (RED) {
             }
         }
 
-/*
-        function variSend(send, o) {
-            let ar = [];
-            for (let i = 0; i < node.outputs; i++) {
-                ar += o[i] ?? null;
-            }
-            send([o[0]]);
-        }
-*/
-
     }
     RED.nodes.registerType("rate-limiter", RateLimitNode);
 };
