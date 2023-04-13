@@ -87,7 +87,7 @@ If the node receives for example 6 messages within 10 secoonds, only 5 are sent 
 
 ## Settings dialog
 
-<img width="600" alt="image" src="https://user-images.githubusercontent.com/44269764/231830770-a42e8a01-566d-4c66-b37e-db69d632f337.png">
+<img width="586" alt="image" src="https://user-images.githubusercontent.com/44269764/231840277-fca73e90-5234-4ec4-9a76-9ddd8c3bbf1a.png">
 
 ### Control Topic
 

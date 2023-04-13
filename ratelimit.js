@@ -314,7 +314,7 @@ module.exports = function (RED) {
                         if ((typeof msg.payload.queue === "number") && isPositiveInteger(msg.payload.queue)) {
                             node.buffer_size = msg.payload.queue;
                             if (true || node.drop_select === "queue") {
-                                while (node.buffer.len() > node.buffer_size) {
+                                while (node.buffer_size > 0 && node.buffer.len() > node.buffer_size) {
                                     if (node.emit_msg_2nd) {
                                         let oldmsg;
                                         if (node.buffer_drop_old) {
