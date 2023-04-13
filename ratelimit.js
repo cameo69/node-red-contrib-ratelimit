@@ -1,5 +1,19 @@
 /*
-    Copyright missing
+ISC License
+
+Copyright (c) 2023 cameo69
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
 */
 
 module.exports = function (RED) {
@@ -22,6 +36,79 @@ module.exports = function (RED) {
         return _maxKeptMsgsCount;
     }
 
+    function QueueLinked() { //based on code by Blindman67 https://codereview.stackexchange.com/questions/255698/queue-with-o1-enqueue-and-dequeue-with-js-arrays
+        var head, tail;
+        var l = 0;
+        return Object.freeze({     
+            push(value) { 
+                const link = {value, next: undefined, previous: undefined};
+                if (tail) link.previous = tail;
+                tail = head ? tail.next = link : head = link;
+                l++;
+            },
+            shift() {
+                if (head) {
+                    const value = head.value;
+                    head = head.next;
+                    if (head) {
+                        head.previous = undefined;
+                    } else {
+                        tail = undefined;
+                    }
+                    l--;
+                    return value;
+                }
+            },
+            pop() {
+                if (tail) {
+                    const value = tail.value;
+                    tail = tail.previous;
+                    if (tail) {
+                        tail.next = undefined;
+                    } else {
+                        head = undefined;
+                    }
+                    l--;
+                    return value;
+                }
+            },
+            peek() { return head?.value },
+            len() { return l },
+            isEmpty() { return (l === 0) },
+            removeFirstOccurrence(v) {
+                //let idx = 1;
+                if (head) {
+                    if (head.value === v) {
+                        head = head.next;
+                        l--;
+                        return true;
+                        //return idx;
+                    }
+    
+                    let lastHead = head;
+                    let currentPos = head.next;
+    
+                    while (currentPos) {    
+                        //idx++;
+                        if (currentPos.value === v) {
+                            lastHead.next = currentPos.next;
+                            if (currentPos === tail) {
+                                tail = lastHead;
+                            }
+                            l--;
+                            return true;
+                            //return idx;
+                        }
+                        lastHead = currentPos;
+                        currentPos = currentPos.next;
+                    }
+                }
+                return false;
+                //return -1;
+            }
+        });
+    }
+    
     function RateLimitNode(config) {
         const node = this;
         RED.nodes.createNode(node, config);
@@ -48,6 +135,13 @@ module.exports = function (RED) {
             config.drop_select = "drop";
             config.emit_msg_2nd = true;
         }
+
+        // backward compatibility to v0.0.13 and earlier
+        if (typeof config.control_topic == "undefined")
+        {
+            config.control_topic = "";
+        }
+
 
         node.rateUnits = config.rateUnits;
 
@@ -79,8 +173,13 @@ module.exports = function (RED) {
         node.addcurrentcount = config.addcurrentcount;
         node.msgcounter = 0;
 
-        node.buffer = [];
-        node.timeoutIDs = [];
+        node.buffer = QueueLinked();
+        node.timeoutLinkedIDs = QueueLinked();
+
+        node.org_rate = Object.freeze({"rate": node.rate, "nbRateUnits": node.nbRateUnits, "buffer_size": node.buffer_size});
+        node.useControlTopic = (typeof config.control_topic === "string" && config.control_topic !== "");
+        node.control_topic = config.control_topic;
+
         node.isOpen = true;
         node.canReportStatus = true;
 
@@ -90,7 +189,7 @@ module.exports = function (RED) {
             node.on("input", function (msg, send, done) {
                 function addTimeout() {
                     function addTimeoutID(id) {
-                        node.timeoutIDs.push(id);
+                        node.timeoutLinkedIDs.push(id);
                     }
 
                     (function() {
@@ -107,14 +206,18 @@ module.exports = function (RED) {
                             }
                             sendFromQueue();
 
-                            node.timeoutIDs.splice( node.timeoutIDs.findIndex(id => id === tID), 1);
+                            let erg = node.timeoutLinkedIDs.removeFirstOccurrence(tID);
+                            //node.send([null, {payload: erg}]);
+                            if (!erg) {
+                                node.error("if (!erg) {")
+                            };
                         }, node.nbRateUnits);
                         addTimeoutID(tID);
                     })();
                 }
 
                 function sendFromQueue() {
-                    if (node.isOpen && node.msgcounter < node.rate && node.buffer.length > 0) {
+                    while (node.isOpen && node.msgcounter < node.rate && !node.buffer.isEmpty()) {
                         const currentCounter = ++node.msgcounter;
                         const msgInfo = node.buffer.shift();
                         addCurrentCountToMsg(msgInfo.msg, currentCounter);
@@ -122,13 +225,119 @@ module.exports = function (RED) {
                         addTimeout();
                         updateStatus();
                         msgInfo.done();
-                        sendFromQueue();
                     }
+                }
+
+                function flushQueue() {
+                    while (node.isOpen && !node.buffer.isEmpty()) {
+                        const currentCounter = ++node.msgcounter;
+                        const msgInfo = node.buffer.shift();
+                        addCurrentCountToMsg(msgInfo.msg, currentCounter);
+                        msgInfo.send(msgInfo.msg);
+                        addTimeout();
+                        updateStatus();
+                        msgInfo.done();
+                    }
+                }
+
+                function flushResetQueue() {
+                    node.isOpen = false;
+                    while (!node.buffer.isEmpty()) {
+                        const currentCounter = ++node.msgcounter;
+                        const msgInfo = node.buffer.shift();
+                        addCurrentCountToMsg(msgInfo.msg, currentCounter);
+                        msgInfo.send(msgInfo.msg);
+                        //addTimeout();
+                        //updateStatus();
+                        msgInfo.done();
+                    }
+                    resetQueue();
+                }
+
+                function resetQueue() {
+                    node.isOpen = false;
+
+                    while(!node.timeoutLinkedIDs.isEmpty()) {
+                        let id = node.timeoutLinkedIDs.shift();
+                        clearTimeout(id);
+                    }
+                
+                    while(!node.buffer.isEmpty()) {
+                        node.buffer.shift().done();
+                    }
+                
+                    node.msgcounter = 0;
+
+                    node.rate = node.org_rate.rate;
+                    node.nbRateUnits = node.org_rate.nbRateUnits;
+                    node.buffer_size = node.org_rate.buffer_size;
+
+                    //node.status({});
+                    updateStatus();
+                    node.isOpen = true;
                 }
 
                 function send_emit_msg_2nd(msg, send) {
                     addCurrentCountToMsg(msg, node.msgcounter);
                     send([null, msg]);
+                }
+
+                if (node.useControlTopic && msg.topic === node.control_topic) {
+                    if (msg.payload === "status") {
+                        msg.payload = {
+                            "buffer_len": node.buffer.len(),
+                            "timeoutLinkedIDs_len": node.timeoutLinkedIDs.len()
+                        };
+
+                        if (node.outputs == 1) {
+                            send(msg);
+                        } else {
+                            send([msg, null]);
+                        }
+                    } else if (msg.payload === "flush") {
+                        flushQueue();
+                    } else if (msg.payload === "flushreset") {
+                        flushResetQueue();
+                    } else if (msg.payload === "reset") {
+                        resetQueue();
+                    } else if (typeof msg.payload === "object") {
+                        function isPositiveInteger(n) {
+                            return 0 === n % (!isNaN(parseFloat(n)) && 0 <= ~~n);
+                        }
+
+                        if ((typeof msg.payload.rate === "number") && isPositiveInteger(msg.payload.rate) && (msg.payload.rate > 0)) {
+                            node.rate = msg.payload.rate;
+                        }
+                        if ((typeof msg.payload.time === "number") && isPositiveInteger(msg.payload.time) && (msg.payload.time > 0)) {
+                            node.nbRateUnits = msg.payload.time;
+                        }
+                        if ((typeof msg.payload.queue === "number") && isPositiveInteger(msg.payload.queue)) {
+                            node.buffer_size = msg.payload.queue;
+                            if (true || node.drop_select === "queue") {
+                                while (node.buffer.len() > node.buffer_size) {
+                                    if (node.emit_msg_2nd) {
+                                        let oldmsg;
+                                        if (node.buffer_drop_old) {
+                                            oldmsg = node.buffer.shift();
+                                        } else {
+                                            oldmsg = node.buffer.pop();
+                                        }
+                                        send_emit_msg_2nd(oldmsg.msg, oldmsg.send);
+                                        oldmsg.done();
+                                    } else {
+                                        if (node.buffer_drop_old) {
+                                            node.buffer.shift().done();
+                                        } else {
+                                            node.buffer.pop().done();
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    done();
+                    return;
                 }
 
                 if (!node.isOpen) {
@@ -152,7 +361,7 @@ module.exports = function (RED) {
                 //    done();
 
                 } else if (node.drop_select === "queue") {
-                    if (node.buffer_size > 0 && node.buffer.length >= node.buffer_size) {
+                    if (node.buffer_size > 0 && node.buffer.len() >= node.buffer_size) {
                         if (node.buffer_drop_old) {
                             let oldmsg = node.buffer.shift();
                             if (node.emit_msg_2nd) {
@@ -189,11 +398,14 @@ module.exports = function (RED) {
             node.on('close', function(removed, done) {
                 node.isOpen = false;
 
-                while(node.timeoutIDs.length) {
-                    clearTimeout(node.timeoutIDs.pop());
+                while(!node.timeoutLinkedIDs.isEmpty()) {
+                    let id = node.timeoutLinkedIDs.shift();
+                    clearTimeout(id);
+                    //node.timeoutLinkedIDs.shift()
                 }
-                while(node.buffer.length) { //https://stackoverflow.com/questions/8860188/javascript-clear-all-timeouts
-                    node.buffer.pop().done();
+
+                while(!node.buffer.isEmpty()) {
+                    node.buffer.shift().done();
                 }
                 node.msgcounter = 0;
                 node.status({});
@@ -227,7 +439,7 @@ module.exports = function (RED) {
                 node.statusNeedsUpdate = false;
                 let color = "green";
                 let currentCount = node.msgcounter;
-                const bufLength = node.buffer.length;
+                const bufLength = node.buffer.len();
                 if (bufLength > 0 || currentCount > 0 || !isFinal) {            
                     if (bufLength === 0) {
                         if (currentCount >= node.rate) {
@@ -242,7 +454,8 @@ module.exports = function (RED) {
                     let txt = currentCount + " sent in timeframe";
                     if (bufLength) txt += ", " + bufLength + " queued";
                     //if (str) txt += ", " + str;
-                    node.status({ fill: color, shape: "ring", text: txt }); //`${txt} - ${node.timeoutIDs.length}` });
+                    node.status({ fill: color, shape: "ring", text: txt });
+                    //node.status({ fill: color, shape: "ring", text: `${txt} - ${node.timeoutLinkedIDs.len()}` });
                 } else {
                     //node.status({ fill: color, shape: "dot", text: "" });
                     node.status({});
@@ -277,6 +490,10 @@ module.exports = function (RED) {
 };
 
 /*
+    - possibility to control via command 'control'? --> reset, flush, trigger, status...)
     - persistence after restart node red?
-    
+    - blocking gate (stores all/parts (for given time period?) and only releases after certain time -> flush or rate)
+    - threshold gate (like blocking gate, but releases when certain amount per time (rate) is reached, else drop/2nd)
+    - better implementation of queue (suited for high speeds)
+    - burst generation mode
 */

@@ -1,3 +1,6 @@
+- 0.0.14 (2023-04-13)
+    - replaced JS Array with a much more efficient queue; complexity O(1); allows for queue size of hundred thousands without getting slower
+    - added possibility to control behaviour via msg (reset, flush, flushreset, and change rate/time/queue)
 - 0.0.13 (2023-03-29)
     - added max queue size
     - added queueing modes a) drop oldest message and b) drop new messages

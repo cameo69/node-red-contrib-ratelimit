@@ -39,6 +39,9 @@
         "buffer_drop_type": "buffer_drop_type",
         "buffer_drop_old": "Drop oldest message if queue is full",
         "buffer_drop_new": "Drop new messages if queue is full",
+        "control_topic_head": "Control Topic",
+        "control_topic": "control",
+        "control_topic_text": "Set msg.topic to control node (empty = disabled)",
         "errors": {
             "too-many": "too many pending messages in delay node",
             "invalid-timeout": "Invalid delay value",

@@ -87,9 +87,37 @@ If the node receives for example 6 messages within 10 secoonds, only 5 are sent 
 
 ## Settings dialog
 
-<img width="549" alt="image" src="https://user-images.githubusercontent.com/44269764/228511190-7d0dbf9a-4965-49ef-a9ee-98d2396900f5.png">
+<img width="600" alt="image" src="https://user-images.githubusercontent.com/44269764/231830770-a42e8a01-566d-4c66-b37e-db69d632f337.png">
 
-## Example
+### Control Topic
+
+The node allows to control some of the settings dynamically. To enable the function a dedicated topic must be given in settings dialog.
+
+If control topic is enabled, following commands are available:
+
+- **reset** resets the node's sent messages, delets the queue, all dynamically changed settings will be reverted to configured settings
+- **flush** empties the whole queue at once
+- **flushreset** executes a **flush** followed by a **reset** in one go
+- an JSON object one or any combination of attributes **rate**, **time**, and **queue** allows to change the parameters dynamically (until redeployment or **reset**)
+  - **rate** defines the allowed messages per timeframe and must be an integer > 0
+  - **time** defines the timeframe in milliseconds
+  - **queue** defines the queue max size; 0 means no limit; if the new size of the queue is smaller than the number of already queued messages, the excess is dropped under normal rules (i.e. oldest or nexest messages are dropped or flushed to 2nd exit)
+
+Message `{"topic":"control", "payload":"reset"}` will reset the rate-limiter node.
+
+This message will change the allowed rate to 1234 msg/17s with queue max size = 10000.
+```
+{
+  "topic":"control",
+  "payload":{
+    "rate":1234,
+    "time":17000,
+    "queue":10000
+  }
+}
+```
+
+## General example
 
 ![output_rate-limiter01](https://user-images.githubusercontent.com/44269764/225151405-70633686-777a-4feb-a8ae-2521ec78e505.gif)
 

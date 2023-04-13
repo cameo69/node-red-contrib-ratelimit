@@ -1,5 +1,19 @@
 <!--
-  Copyright missing
+ISC License
+
+Copyright (c) 2023 cameo69
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
 -->
 
 <!-- Define setting UI for weather-data node -->
@@ -44,7 +58,7 @@
         <div id="queue_max_size">
             <div class="form-row">
                 <label for="node-input-buffer_size"><span data-i18n="rate-limiter.buffer_config"></span></label>
-                <input type="text" id="node-input-buffer_size" placeholder="1000" style="text-align:end; width:60px !important">
+                <input type="text" id="node-input-buffer_size" placeholder="1000" style="text-align:end; width:120px !important">
                 <label for="node-input-buffer_size"> <span data-i18n="rate-limiter.buffer_size"></span></label>
             </div>
 
@@ -71,6 +85,12 @@
         </div>
 
 	</div>
+
+    <div class="form-row" id="control-details">
+        <label for="node-input-control_topic"><i class="fa fa-tasks"></i> <span data-i18n="rate-limiter.control_topic_head"></span></label>
+        <input type="text" id="node-input-control_topic" data-i18n="[placeholder]rate-limiter.control_topic" style="width:120px !important">
+        <label style="margin:5;width: auto;" for="node-input-control_topic"> <span data-i18n="rate-limiter.control_topic_text"></span></label>
+    </div>
 
     <div class="form-row">
         <label for="node-input-name"><i class="fa fa-tag"></i> <span data-i18n="rate-limiter.name"></span></label>
@@ -145,10 +165,9 @@
                     return RED._("rate-limiter.errors.invalid-rate");
                 }},
             buffer_drop: {value: "buffer_drop_new"},
-            emit_msg_2nd: {
-                value: false
-            },
-            version: {value: 0.0013}
+            emit_msg_2nd: {value: false},
+            control_topic: {value: ""},
+            version: {value: 0.0014}
         },
         inputs:1,
         outputs:1,
@@ -225,9 +244,16 @@ node-input-name
                 $("#node-input-outputs").val(2);
                 $("#node-input-emit_msg_2nd").prop('checked', true);
                 //setTimeout(() => {
-                    $("#node-input-drop_select option[value='drop']").prop('selected', true);
+                    //$("#node-input-drop_select option[value='drop']").prop('selected', true);
+                    $("#node-input-drop_select").val("drop").trigger("change");
                 //}, 50);
                 $("#queue_max_size").hide();
+            }
+
+            //added post v0.0.13
+            if (typeof this.control_topic == "undefined") {
+                //this.delay_action = "ratelimit";
+                $("#node-input-control_topic").val('');
             }
 
 
