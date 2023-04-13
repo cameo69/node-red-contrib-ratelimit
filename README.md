@@ -101,7 +101,7 @@ If control topic is enabled, following commands are available:
 - an JSON object one or any combination of attributes **rate**, **time**, and **queue** allows to change the parameters dynamically (until redeployment or **reset**)
   - **rate** defines the allowed messages per timeframe and must be an integer > 0
   - **time** defines the timeframe in milliseconds
-  - **queue** defines the queue max size; 0 means no limit; if the new size of the queue is smaller than the number of already queued messages, the excess is dropped under normal rules (i.e. oldest or nexest messages are dropped or flushed to 2nd exit)
+  - **queue** defines the queue max size; 0 means no limit; if the new size of the queue is smaller than the number of already queued messages, the excess is dropped under normal rules (i.e. oldest or newest messages are dropped or flushed to 2nd exit)
 
 Message `{"topic":"control", "payload":"reset"}` will reset the rate-limiter node.
 
