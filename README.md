@@ -1,5 +1,12 @@
 # @cameo69/node-red-ratelimit
 A simple node that offers rate limiting based on a sliding window.
+<br>
+It ensures a strict limit on rate of messages, provides the set rate very precise (if queueing is used), and performes well even under very high load.
+
+## Application
+
+A classic application could be the input protection of a flow that receives messages from the outside world, e.g. web requests or commands via MQTT.
+If the message rate is normal, messages are forwarded without any delay; but if there is too high volume, the messages are limited.
 
 # General rate limiting
 
@@ -19,11 +26,6 @@ For every incoming message the node checks if the number of messages sent in the
 if yes, the message will be sent to output 1;
 if no, the message will be dropped, sent to output 2, or queued. Depending on the settings.
 If messages are queued, they will be release on output 1 whenever they will not exceed the set rate limit.
-
-## Application
-
-A classic application could be the input protection of a flow that receives messages from the outside world, e.g. web requests or commands via MQTT.
-If the message rate is normal, messages are forwarded without any delay; but if there is too high volume, the messages are limited.
 
 # Settings of @cameo69/node-red-ratelimit
 
@@ -79,7 +81,7 @@ For example let's assume this setting:
 - Queue intermediate messages --> All messages above the limit of 5 messages will be buffered for later sending and...
 - Queue Max Size equals 0 which means with no limit --> No message will be dropped.
 
-If the node receives for example 6 messages within 10 secoonds, only 5 are sent immediately, and the 6th message will be sent exactly 10 secoonds after the first message, because then there were only 4 messages sent in the past 10 seconds, hence the 6th can be sent before the limit is reached again.
+If the node receives for example 6 messages within 10 seconds, only 5 are sent immediately, and the 6th message will be sent exactly 10 seconds after the first message, because then there were only 4 messages sent in the past 10 seconds, hence the 6th can be sent before the limit is reached again.
 
 ## Node
 
@@ -98,7 +100,7 @@ If control topic is enabled, following commands are available:
 - **reset** resets the node's sent messages, delets the queue, all dynamically changed settings will be reverted to configured settings
 - **flush** empties the whole queue at once
 - **flushreset** executes a **flush** followed by a **reset** in one go
-- an JSON object one or any combination of attributes **rate**, **time**, and **queue** allows to change the parameters dynamically (until redeployment or **reset**)
+- Attributes **rate**, **time**, and **queue** can be changed by message. Sending a JSON object in `msg.payload` allows the parameters to change dynamically; until redeployment or **reset**.
   - **rate** defines the allowed messages per timeframe and must be an integer > 0
   - **time** defines the timeframe in milliseconds
   - **queue** defines the queue max size; 0 means no limit; if the new size of the queue is smaller than the number of already queued messages, the excess is dropped under normal rules (i.e. oldest or newest messages are dropped or flushed to 2nd exit)
