@@ -206,11 +206,7 @@ module.exports = function (RED) {
                             }
                             sendFromQueue();
 
-                            let erg = node.timeoutLinkedIDs.removeFirstOccurrence(tID);
-                            //node.send([null, {payload: erg}]);
-                            if (!erg) {
-                                node.error("if (!erg) {")
-                            };
+                            node.timeoutLinkedIDs.removeFirstOccurrence(tID);
                         }, node.nbRateUnits);
                         addTimeoutID(tID);
                     })();
@@ -223,9 +219,9 @@ module.exports = function (RED) {
                         addCurrentCountToMsg(msgInfo.msg, currentCounter);
                         msgInfo.send(msgInfo.msg);
                         addTimeout();
-                        updateStatus();
                         msgInfo.done();
                     }
+                    updateStatus();
                 }
 
                 function flushQueue() {
@@ -235,9 +231,9 @@ module.exports = function (RED) {
                         addCurrentCountToMsg(msgInfo.msg, currentCounter);
                         msgInfo.send(msgInfo.msg);
                         addTimeout();
-                        updateStatus();
                         msgInfo.done();
                     }
+                    updateStatus();
                 }
 
                 function flushResetQueue() {
@@ -282,25 +278,33 @@ module.exports = function (RED) {
                     send([null, msg]);
                 }
 
-                if (node.useControlTopic && msg.topic === node.control_topic) {
-                    if (msg.payload === "status") {
-                        msg.payload = {
-                            "buffer_len": node.buffer.len(),
-                            "timeoutLinkedIDs_len": node.timeoutLinkedIDs.len()
-                        };
+                if (!node.isOpen) {
+                    done();
+                    return;
+                }
 
-                        if (node.outputs == 1) {
-                            send(msg);
-                        } else {
-                            send([msg, null]);
+                if (node.useControlTopic && typeof msg.topic === 'string' && msg.topic === node.control_topic) {
+                    if (typeof msg.payload === 'string') {
+                        if (msg.payload === "status") {
+                            msg.payload = {
+                                "buffer_len": node.buffer.len(),
+                                "timeoutLinkedIDs_len": node.timeoutLinkedIDs.len()
+                            };
+
+                            if (node.outputs == 1) {
+                                send(msg);
+                            } else {
+                                send([msg, null]);
+                            }
+                        } else if (msg.payload === "flush") {
+                            flushQueue();
+                        } else if (msg.payload === "flushreset") {
+                            flushResetQueue();
+                        } else if (msg.payload === "reset") {
+                            resetQueue();
                         }
-                    } else if (msg.payload === "flush") {
-                        flushQueue();
-                    } else if (msg.payload === "flushreset") {
-                        flushResetQueue();
-                    } else if (msg.payload === "reset") {
-                        resetQueue();
-                    } else if (typeof msg.payload === "object") {
+                    }
+                    if (typeof msg.payload === "object") {
                         function isPositiveInteger(n) {
                             return 0 === n % (!isNaN(parseFloat(n)) && 0 <= ~~n);
                         }
@@ -336,11 +340,6 @@ module.exports = function (RED) {
                         }
                     }
 
-                    done();
-                    return;
-                }
-
-                if (!node.isOpen) {
                     done();
                     return;
                 }
@@ -484,6 +483,10 @@ module.exports = function (RED) {
     - persistence after restart node red?
     - blocking gate (stores all/parts (for given time period?) and only releases after certain time -> flush or rate)
     - threshold gate (like blocking gate, but releases when certain amount per time (rate) is reached, else drop/2nd)
-    - better implementation of queue (suited for high speeds)
     - burst generation mode
+
+    done
+        - better implementation of queue (suited for high speeds)
+        - possibility to control via command 'control'? --> reset, flush, trigger, status...)
+
 */
